@@ -191,7 +191,7 @@ Automated tests use hand-written, sanitized JSON fixtures. They cover:
 - malformed, oversized, out-of-range, and wrong-id responses;
 - the exact fixed outbound App Server message set;
 - remaining-percentage calculation and all five pet-state boundaries.
-- one-hour reset-notification timing, including post-reset rejection.
+- one-week reset-notification timing, including post-reset rejection.
 
 The local smoke test is `swift test`, then `swift run QuotaCreature` with an
 already logged-in Codex CLI. The manual acceptance check confirms that a menu

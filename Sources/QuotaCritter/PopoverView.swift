@@ -34,7 +34,7 @@ struct PopoverView: View {
                 case let .monthlyCredits(limit):
                     MonthlyCreditLimitRow(limit: limit, now: store.currentDate)
                     Toggle(
-                        "Notify 1 hour before reset",
+                        "Notify 1 week before reset",
                         isOn: Binding(
                             get: { store.monthlyResetReminderEnabled },
                             set: { store.setMonthlyResetReminderEnabled($0) }

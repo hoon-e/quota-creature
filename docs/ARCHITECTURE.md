@@ -27,7 +27,7 @@ countdown; it never polls the service more often than once per minute unless
 the user presses Refresh.
 
 When the user enables the monthly-reset toggle, `UNUserNotificationCenter`
-schedules one local notification an hour before the current monthly reset.
+schedules one local notification a week before the current monthly reset.
 The only persisted values are the opt-in preference and the reset timestamp
 already scheduled, so minute-by-minute refreshes cannot duplicate it.
 

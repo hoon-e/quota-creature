@@ -2,7 +2,7 @@ import Foundation
 import UserNotifications
 
 enum MonthlyResetReminder {
-    static let leadTime: TimeInterval = 3_600
+    static let leadTime: TimeInterval = 7 * 24 * 3_600
 
     static func delay(until reset: Date, now: Date = Date()) -> TimeInterval? {
         guard reset > now else {
@@ -15,7 +15,8 @@ enum MonthlyResetReminder {
 @MainActor
 final class MonthlyResetNotifier {
     private static let enabledKey = "monthlyResetReminderEnabled"
-    private static let scheduledResetKey = "monthlyResetReminderScheduledReset"
+    private static let scheduledResetKey = "monthlyResetReminderScheduledResetV2"
+    private static let legacyScheduledResetKey = "monthlyResetReminderScheduledReset"
 
     private let center = UNUserNotificationCenter.current()
     private let defaults = UserDefaults.standard
@@ -53,15 +54,21 @@ final class MonthlyResetNotifier {
             return
         }
 
+        var identifiers = [identifier(for: limit.resetsAt)]
         if previousReset > 0 {
-            center.removePendingNotificationRequests(withIdentifiers: [identifier(for: previousReset)])
+            identifiers.append(identifier(for: previousReset))
         }
+        let legacyReset = defaults.double(forKey: Self.legacyScheduledResetKey)
+        if legacyReset > 0 {
+            identifiers.append(identifier(for: legacyReset))
+        }
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
 
         let content = UNMutableNotificationContent()
         content.title = "QuotaCreature"
         content.body = delay == 1
             ? "Your monthly Codex credits reset soon."
-            : "Your monthly Codex credits reset in about an hour."
+            : "Your monthly Codex credits reset in about a week."
         content.sound = .default
 
         let request = UNNotificationRequest(
@@ -73,6 +80,7 @@ final class MonthlyResetNotifier {
         do {
             try await center.add(request)
             defaults.set(limit.resetsAt, forKey: Self.scheduledResetKey)
+            defaults.removeObject(forKey: Self.legacyScheduledResetKey)
         } catch {
             return
         }
@@ -80,11 +88,16 @@ final class MonthlyResetNotifier {
 
     private func disable() {
         let previousReset = defaults.double(forKey: Self.scheduledResetKey)
+        let legacyReset = defaults.double(forKey: Self.legacyScheduledResetKey)
         if previousReset > 0 {
             center.removePendingNotificationRequests(withIdentifiers: [identifier(for: previousReset)])
         }
+        if legacyReset > 0 {
+            center.removePendingNotificationRequests(withIdentifiers: [identifier(for: legacyReset)])
+        }
         defaults.removeObject(forKey: Self.enabledKey)
         defaults.removeObject(forKey: Self.scheduledResetKey)
+        defaults.removeObject(forKey: Self.legacyScheduledResetKey)
     }
 
     private func identifier(for reset: TimeInterval) -> String {

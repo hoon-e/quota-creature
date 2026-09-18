@@ -12,9 +12,9 @@ QuotaCreature is unofficial and is not affiliated with or endorsed by OpenAI.
 - Shows a pixel creature whose expression changes with usage.
 - Opens a small popover with remaining percentage, reset time, optional
   secondary window or monthly credit usage, manual refresh, and quit.
-- Can send one opt-in local notification an hour before a monthly credit
+- Can send one opt-in local notification a week before a monthly credit
   reset.
-- Builds with SwiftUI/AppKit only—no package dependencies.
+- Uses SwiftUI and AppKit with no package dependencies.
 
 ## Quick start
 

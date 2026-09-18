@@ -30,9 +30,9 @@ permanent spinner. Check `codex login status`, keep the CLI current, then use
 Refresh. The app intentionally does not fall back to scraping local Codex
 files or terminal output.
 
-For a monthly credit limit, enable **Notify 1 hour before reset** in the
-popover if you want a local macOS reminder. The system asks for notification
-permission only when that toggle is enabled.
+For a monthly credit limit, enable "Notify 1 week before reset" in the
+popover to receive a local macOS reminder. The system asks for notification
+permission only when you enable that toggle.
 
 ## Install a local app bundle
 
