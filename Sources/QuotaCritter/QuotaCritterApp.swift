@@ -15,24 +15,22 @@ struct QuotaCreatureApp: App {
         MenuBarExtra {
             PopoverView(store: store)
         } label: {
-            TimelineView(.animation(minimumInterval: 0.25, paused: false)) { timeline in
-                HStack(spacing: 3) {
-                    Image(
-                        nsImage: PixelCreature.menuBarImage(
-                            for: store.displayedMood,
-                            activity: store.displayedActivity,
-                            now: timeline.date,
-                            reduceMotion: reduceMotion
-                        )
+            HStack(spacing: 3) {
+                Image(
+                    nsImage: PixelCreature.menuBarImage(
+                        for: store.displayedMood,
+                        activity: store.displayedActivity,
+                        now: store.animationDate,
+                        reduceMotion: reduceMotion
                     )
-                        .renderingMode(.template)
-                    Text(store.displayedMenuTitle)
-                        .monospacedDigit()
-                }
-                .accessibilityLabel(
-                    "QuotaCreature \(store.displayedMenuTitle), \(store.displayedActivity.rawValue)"
                 )
+                    .renderingMode(.template)
+                Text(store.displayedMenuTitle)
+                    .monospacedDigit()
             }
+            .accessibilityLabel(
+                "QuotaCreature \(store.displayedMenuTitle), \(store.displayedActivity.rawValue)"
+            )
         }
         .menuBarExtraStyle(.window)
     }
@@ -42,6 +40,7 @@ struct QuotaCreatureApp: App {
 final class UsageStore: ObservableObject {
     @Published private(set) var state: UsageViewState = .loading
     @Published private(set) var currentDate = Date()
+    @Published private(set) var animationDate = Date()
     @Published private(set) var activity: UsageActivity = .idle
     @Published private(set) var selectedProvider: UsageProvider = .codex
     @Published private(set) var monthlyResetReminderEnabled: Bool
@@ -53,6 +52,7 @@ final class UsageStore: ObservableObject {
     private var refreshID = 0
     private var refreshTimer: Timer?
     private var clockTimer: Timer?
+    private var animationTimer: Timer?
 
     init() {
         monthlyResetReminderEnabled = resetNotifier.isEnabled
@@ -65,6 +65,11 @@ final class UsageStore: ObservableObject {
         clockTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.currentDate = Date()
+            }
+        }
+        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.updateAnimationDate()
             }
         }
     }
@@ -125,5 +130,23 @@ final class UsageStore: ObservableObject {
 
     func quit() {
         NSApplication.shared.terminate(nil)
+    }
+
+    private func updateAnimationDate() {
+        let now = Date()
+        let currentPhase = PixelCreature.phase(
+            for: displayedActivity,
+            at: animationDate.timeIntervalSinceReferenceDate,
+            reduceMotion: false
+        )
+        let nextPhase = PixelCreature.phase(
+            for: displayedActivity,
+            at: now.timeIntervalSinceReferenceDate,
+            reduceMotion: false
+        )
+
+        if currentPhase != nextPhase {
+            animationDate = now
+        }
     }
 }

@@ -130,6 +130,25 @@ final class UsageSnapshotTests: XCTestCase {
         )
     }
 
+    @MainActor
+    func testMenuBarImageReusesPreRenderedFrame() {
+        let date = Date(timeIntervalSinceReferenceDate: 0)
+        let first = PixelCreature.menuBarImage(
+            for: .bright,
+            activity: .idle,
+            now: date,
+            reduceMotion: false
+        )
+        let second = PixelCreature.menuBarImage(
+            for: .bright,
+            activity: .idle,
+            now: date,
+            reduceMotion: false
+        )
+
+        XCTAssertTrue(first === second)
+    }
+
     func testClaudePresentationDoesNotReuseCodexQuota() throws {
         let state = UsageViewState.ready(
             try rateLimitSnapshot(usedPercent: 50, resetsAt: 1_900_000_000)

@@ -21,7 +21,8 @@ struct PopoverView: View {
             HStack(spacing: 14) {
                 PixelCreatureView(
                     mood: store.displayedMood,
-                    activity: store.displayedActivity
+                    activity: store.displayedActivity,
+                    now: store.animationDate
                 )
                     .frame(width: 86, height: 86)
 
@@ -194,33 +195,32 @@ private func remainingTime(until date: Date, now: Date = Date()) -> String {
 private struct PixelCreatureView: View {
     let mood: PetMood
     let activity: UsageActivity
+    let now: Date
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 0.25, paused: false)) { timeline in
-            let phase = PixelCreature.phase(
-                for: activity,
-                at: timeline.date.timeIntervalSinceReferenceDate,
-                reduceMotion: reduceMotion
-            )
+        let phase = PixelCreature.phase(
+            for: activity,
+            at: now.timeIntervalSinceReferenceDate,
+            reduceMotion: reduceMotion
+        )
 
-            Canvas { context, size in
-                let unit = min(size.width, size.height) / 16
-                let xOffset = (size.width - (16 * unit)) / 2
-                let yOffset = (size.height - (16 * unit)) / 2
+        Canvas { context, size in
+            let unit = min(size.width, size.height) / 16
+            let xOffset = (size.width - (16 * unit)) / 2
+            let yOffset = (size.height - (16 * unit)) / 2
 
-                for pixel in PixelCreature.pixels(for: mood, phase: phase) {
-                    let rect = CGRect(
-                        x: xOffset + CGFloat(pixel.x) * unit,
-                        y: yOffset + CGFloat(pixel.y) * unit,
-                        width: unit,
-                        height: unit
-                    )
-                    context.fill(Path(rect), with: .color(PixelCreature.color(for: pixel.tone)))
-                }
+            for pixel in PixelCreature.pixels(for: mood, phase: phase) {
+                let rect = CGRect(
+                    x: xOffset + CGFloat(pixel.x) * unit,
+                    y: yOffset + CGFloat(pixel.y) * unit,
+                    width: unit,
+                    height: unit
+                )
+                context.fill(Path(rect), with: .color(PixelCreature.color(for: pixel.tone)))
             }
-            .accessibilityLabel("\(mood.rawValue), \(activity.rawValue) QuotaCreature")
         }
+        .accessibilityLabel("\(mood.rawValue), \(activity.rawValue) QuotaCreature")
     }
 }
 
@@ -391,20 +391,32 @@ enum PixelCreature {
         }
     }
 
+    @MainActor
     static func menuBarImage(
         for mood: PetMood,
         activity: UsageActivity,
         now: Date,
         reduceMotion: Bool
     ) -> NSImage {
-        let size = NSSize(width: 18, height: 18)
-        let image = NSImage(size: size)
-        let unit = size.width / 16
+        let moodIndex = PetMood.allCases.firstIndex(of: mood)!
         let phase = phase(
             for: activity,
             at: now.timeIntervalSinceReferenceDate,
             reduceMotion: reduceMotion
         )
+        return menuBarImages[moodIndex][phase]
+    }
+
+    @MainActor
+    private static let menuBarImages = PetMood.allCases.map { mood in
+        frames.indices.map { makeMenuBarImage(for: mood, phase: $0) }
+    }
+
+    @MainActor
+    private static func makeMenuBarImage(for mood: PetMood, phase: Int) -> NSImage {
+        let size = NSSize(width: 18, height: 18)
+        let image = NSImage(size: size)
+        let unit = size.width / 16
 
         image.lockFocus()
         NSColor.labelColor.setFill()
