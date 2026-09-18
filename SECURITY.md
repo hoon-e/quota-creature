@@ -20,3 +20,7 @@ credential store, no auth-file parser, and no arbitrary command execution.
 These controls reduce known risks; they are not a guarantee that future
 vulnerabilities cannot exist. Security-impacting changes require an update to
 the threat model and tests for the affected trust boundary.
+
+Claude Code support remains Beta until a documented noninteractive output
+contract can be verified. Before a Claude usage reader can ship, it needs
+strict decoding, a response cap, timeout, sanitized environment, and tests.

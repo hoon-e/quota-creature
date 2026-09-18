@@ -9,12 +9,20 @@ QuotaCreature is unofficial and is not affiliated with or endorsed by OpenAI.
 ## What it does
 
 - Refreshes current Codex usage at launch and every minute.
-- Shows a pixel creature whose expression changes with usage.
+- Shows a three-frame pixel creature whose expression changes with usage and
+  whose motion speeds up when recent usage rises faster.
 - Opens a small popover with remaining percentage, reset time, optional
   secondary window or monthly credit usage, manual refresh, and quit.
 - Can send one opt-in local notification a week before a monthly credit
   reset.
 - Uses SwiftUI and AppKit with no package dependencies.
+
+## Provider support
+
+Codex usage is the supported reader. Claude Code support is in Beta: the app
+can detect a local CLI, but its usage reader is still being tested. The Claude
+selection does not invoke Claude, read Claude credentials or local files, or
+parse terminal output.
 
 ## Quick start
 

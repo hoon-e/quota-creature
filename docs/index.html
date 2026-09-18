@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="A local macOS menu-bar creature for the Codex limits your CLI already exposes."
+  >
+  <title>QuotaCreature · Local Codex usage for macOS</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="QuotaCreature home">
+      <span class="wordmark-dot" aria-hidden="true"></span>
+      QuotaCreature
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="#install">Install</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#questions">FAQ</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Local-only macOS menu bar companion</p>
+        <h1 id="hero-title">A tiny creature for the limit you are already using.</h1>
+        <p class="lede">
+          QuotaCreature reads the local Codex App Server every minute and
+          turns your remaining usage into one quiet pixel companion.
+        </p>
+        <div class="chip-row" aria-label="Project facts">
+          <span>Local-only</span>
+          <span>macOS 14+</span>
+          <span>MIT</span>
+        </div>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#install">Build from source</a>
+          <a class="button button-secondary" href="../README.md">Read the README</a>
+        </div>
+      </div>
+
+      <div class="creature-stage">
+        <svg
+          class="hero-creature"
+          viewBox="0 0 16 16"
+          role="img"
+          aria-labelledby="creature-title creature-description"
+          shape-rendering="crispEdges"
+        >
+          <title id="creature-title">A smiling purple pixel creature</title>
+          <desc id="creature-description">
+            A small creature with antennae, bright eyes, cheeks, and a chest light.
+          </desc>
+          <g class="creature-antennae">
+            <rect class="body" x="4" y="1" width="1" height="1"></rect>
+            <rect class="body" x="11" y="1" width="1" height="1"></rect>
+            <rect class="body" x="3" y="2" width="3" height="1"></rect>
+            <rect class="body" x="10" y="2" width="3" height="1"></rect>
+            <rect class="body" x="4" y="3" width="2" height="1"></rect>
+            <rect class="body" x="10" y="3" width="2" height="1"></rect>
+          </g>
+          <g class="creature-body">
+            <rect class="body" x="3" y="4" width="10" height="1"></rect>
+            <rect class="body" x="2" y="5" width="12" height="1"></rect>
+            <rect class="body" x="1" y="6" width="14" height="3"></rect>
+            <rect class="body" x="2" y="9" width="12" height="1"></rect>
+            <rect class="body" x="3" y="10" width="10" height="1"></rect>
+            <rect class="body" x="4" y="11" width="8" height="1"></rect>
+            <rect class="body" x="4" y="12" width="3" height="1"></rect>
+            <rect class="body" x="9" y="12" width="3" height="1"></rect>
+            <rect class="body" x="5" y="13" width="1" height="1"></rect>
+            <rect class="body" x="10" y="13" width="1" height="1"></rect>
+          </g>
+          <g class="creature-face">
+            <rect class="eye" x="5" y="7" width="1" height="1"></rect>
+            <rect class="eye" x="10" y="7" width="1" height="1"></rect>
+            <rect class="shine" x="5" y="8" width="1" height="1"></rect>
+            <rect class="shine" x="10" y="8" width="1" height="1"></rect>
+            <rect class="cheek" x="3" y="9" width="1" height="1"></rect>
+            <rect class="cheek" x="12" y="9" width="1" height="1"></rect>
+            <rect class="chest-light" x="7" y="10" width="2" height="1"></rect>
+          </g>
+        </svg>
+        <p>Moves faster when recent Codex usage rises faster.</p>
+      </div>
+    </section>
+
+    <section class="section install" id="install" aria-labelledby="install-title">
+      <div>
+        <p class="eyebrow">Source build</p>
+        <h2 id="install-title">Install it on your Mac.</h2>
+        <p>
+          The public repository address will replace the two placeholders below
+          when the project is published. Until then, run these commands from a
+          local checkout.
+        </p>
+      </div>
+      <div class="code-stack">
+        <pre><code>git clone &lt;your-public-repository-url&gt;
+cd &lt;repository-directory&gt;
+codex login
+swift test
+swift run QuotaCreature</code></pre>
+        <pre><code>Scripts/install.sh
+open "$HOME/Applications/QuotaCreature.app"</code></pre>
+        <p class="note">The installer refuses to overwrite an existing app bundle.</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="shows-title">
+      <p class="eyebrow">Providers</p>
+      <h2 id="shows-title">One supported reader, one honest beta.</h2>
+      <div class="card-grid">
+        <article class="card card-supported">
+          <p class="card-kicker">Supported</p>
+          <h3>Codex</h3>
+          <p>
+            Remaining percentage and reset time, plus personal rate windows or
+            Business and Enterprise monthly credits when the CLI exposes them.
+          </p>
+        </article>
+        <article class="card">
+          <p class="card-kicker">Beta</p>
+          <h3>Claude Code</h3>
+          <p>
+            Claude Code support is in beta. The app can detect a local CLI, but
+            its usage reader is still being tested.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section local" id="privacy" aria-labelledby="privacy-title">
+      <div class="local-copy">
+        <p class="eyebrow">Local by design</p>
+        <h2 id="privacy-title">No account, server, or history to maintain.</h2>
+        <p>
+          QuotaCreature has no direct network client, usage reporting, stored
+          usage history, or credential-file reader. It starts the existing Codex CLI
+          with a fixed App Server request over local standard input and output.
+        </p>
+      </div>
+      <ul class="check-list">
+        <li>Fixed local Codex command</li>
+        <li>Filtered child-process environment</li>
+        <li>No copied prompt, transcript, or account identity</li>
+        <li>Optional reset reminder stays on the Mac</li>
+      </ul>
+    </section>
+
+    <section class="section questions" id="questions" aria-labelledby="questions-title">
+      <p class="eyebrow">Questions</p>
+      <h2 id="questions-title">Small answers before you build.</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Why does the app show unavailable?</summary>
+          <p>
+            Codex may be signed out, outdated, or not exposing limits. The app
+            shows a generic unavailable state instead of parsing local files or
+            terminal output. See the <a href="./INSTALL.md">installation guide</a>.
+          </p>
+        </details>
+        <details>
+          <summary>Does it upload my usage data?</summary>
+          <p>
+            No. The companion has no direct network client or usage reporting. Read
+            the <a href="../PRIVACY.md">privacy notice</a> for the exact local state.
+          </p>
+        </details>
+        <details>
+          <summary>Does it support Claude Code?</summary>
+          <p>
+            The local detection card is available in Beta. It does not read
+            Claude credentials, sessions, logs, or terminal output.
+          </p>
+        </details>
+        <details>
+          <summary>Why is there no download button?</summary>
+          <p>
+            This source-built project does not publish a binary, Homebrew Cask,
+            or updater yet. The install script builds a local app bundle.
+          </p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>QuotaCreature is unofficial and is not affiliated with or endorsed by OpenAI.</p>
+    <nav aria-label="Project documentation">
+      <a href="../README.md">README</a>
+      <a href="./INSTALL.md">Install</a>
+      <a href="./ARCHITECTURE.md">Architecture</a>
+      <a href="./THREAT_MODEL.md">Threat model</a>
+      <a href="../PRIVACY.md">Privacy</a>
+      <a href="../SECURITY.md">Security</a>
+      <a href="../LICENSE">MIT License</a>
+    </nav>
+  </footer>
+</body>
+</html>

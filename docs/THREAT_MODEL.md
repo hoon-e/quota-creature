@@ -19,6 +19,7 @@
 | Network exposure | The companion opens no listener and uses no HTTP/WebSocket client. App Server communication is local stdio only. |
 | Sensitive UI error output | Errors are mapped to one generic message; raw App Server text is never rendered or logged. |
 | Unwanted notification or usage persistence | Monthly-reset notifications are opt-in. The app stores only the preference and scheduled reset timestamp, never a usage history, account ID, or credential. |
+| Claude Code Beta access | Claude detection checks fixed executable locations only. It does not run Claude, read `~/.claude`, credentials, sessions, or logs, or capture terminal output. |
 
 ## Scope limits
 
@@ -29,3 +30,7 @@ own attack surface but cannot make a compromised local account trustworthy.
 This source-built MVP is not sandboxed for the Mac App Store because it must
 launch the user’s existing Codex CLI. It should be reviewed before use in
 managed or high-security environments.
+
+Claude Code remains Beta until a documented, noninteractive, read-only usage
+response can be tested. There is no fallback to `claude -p`, browser
+automation, direct provider HTTP, or local-file parsing.

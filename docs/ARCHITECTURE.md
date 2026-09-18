@@ -13,6 +13,18 @@ codex app-server --listen stdio://
 Codex rate-limit service
 ```
 
+The optional Claude Code Beta path is separate:
+
+```text
+Claude Code (Beta)
+        │ fixed absolute executable discovery only
+        ▼
+Detected / unavailable card
+```
+
+This path launches no child process and returns no usage values. It checks
+fixed local executable locations with `FileManager.isExecutableFile(atPath:)`.
+
 Each refresh creates one short-lived child process. The client sends exactly:
 
 1. `initialize`
@@ -25,6 +37,12 @@ Business and Enterprise responses use `individualLimit` (`limit`, `used`,
 `remainingPercent`, and `resetsAt`) instead. A local timer updates the reset
 countdown; it never polls the service more often than once per minute unless
 the user presses Refresh.
+
+The same one-second timer selects one of three source-drawn creature frames.
+Each accepted reading replaces one prior in-memory percentage, reset timestamp,
+and sample time. A positive percentage-point change per minute selects idle,
+active, or busy motion; a lower value, a reset window change, or a negative
+change returns the creature to idle. The app does not infer tokens per minute.
 
 When the user enables the monthly-reset toggle, `UNUserNotificationCenter`
 schedules one local notification a week before the current monthly reset.

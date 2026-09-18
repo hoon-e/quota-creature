@@ -15,6 +15,16 @@ codex --version
 codex login status
 ```
 
+Claude Code is optional. Its Beta card only detects a local CLI; it does not
+display Claude usage yet. If you want to check whether Claude Code is
+installed, run:
+
+    claude --version
+
+Its absence does not affect Codex usage. If it is present, QuotaCreature shows
+the Claude Code Beta status card without launching Claude or reading its local
+credentials, sessions, logs, or terminal output.
+
 ## Run from source
 
 ```zsh
