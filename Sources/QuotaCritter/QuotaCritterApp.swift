@@ -15,22 +15,24 @@ struct QuotaCreatureApp: App {
         MenuBarExtra {
             PopoverView(store: store)
         } label: {
-            HStack(spacing: 3) {
-                Image(
-                    nsImage: PixelCreature.menuBarImage(
-                        for: store.displayedMood,
-                        activity: store.displayedActivity,
-                        now: store.currentDate,
-                        reduceMotion: reduceMotion
+            TimelineView(.animation(minimumInterval: 0.25, paused: false)) { timeline in
+                HStack(spacing: 3) {
+                    Image(
+                        nsImage: PixelCreature.menuBarImage(
+                            for: store.displayedMood,
+                            activity: store.displayedActivity,
+                            now: timeline.date,
+                            reduceMotion: reduceMotion
+                        )
                     )
+                        .renderingMode(.template)
+                    Text(store.displayedMenuTitle)
+                        .monospacedDigit()
+                }
+                .accessibilityLabel(
+                    "QuotaCreature \(store.displayedMenuTitle), \(store.displayedActivity.rawValue)"
                 )
-                    .renderingMode(.template)
-                Text(store.displayedMenuTitle)
-                    .monospacedDigit()
             }
-            .accessibilityLabel(
-                "QuotaCreature \(store.displayedMenuTitle), \(store.displayedActivity.rawValue)"
-            )
         }
         .menuBarExtraStyle(.window)
     }

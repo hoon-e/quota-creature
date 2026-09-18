@@ -104,11 +104,11 @@ final class UsageSnapshotTests: XCTestCase {
         )
     }
 
-    func testCreaturePhaseUsesActivityCadence() {
+    func testCreaturePhaseUsesVisibleActivityCadence() {
         XCTAssertEqual(PixelCreature.phase(for: .idle, at: 0, reduceMotion: false), 0)
-        XCTAssertEqual(PixelCreature.phase(for: .idle, at: 4, reduceMotion: false), 1)
-        XCTAssertEqual(PixelCreature.phase(for: .active, at: 2, reduceMotion: false), 1)
-        XCTAssertEqual(PixelCreature.phase(for: .busy, at: 1, reduceMotion: false), 1)
+        XCTAssertEqual(PixelCreature.phase(for: .idle, at: 1, reduceMotion: false), 1)
+        XCTAssertEqual(PixelCreature.phase(for: .active, at: 0.5, reduceMotion: false), 1)
+        XCTAssertEqual(PixelCreature.phase(for: .busy, at: 0.25, reduceMotion: false), 1)
     }
 
     func testCreaturePhaseUsesRestingFrameForReducedMotion() {
