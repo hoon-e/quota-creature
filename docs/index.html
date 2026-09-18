@@ -35,11 +35,15 @@
         <div class="chip-row" aria-label="Project facts">
           <span>Local-only</span>
           <span>macOS 14+</span>
+          <span>v0.0.1-beta</span>
           <span>MIT</span>
         </div>
         <div class="hero-actions">
-          <a class="button button-primary" href="#install">Build from source</a>
-          <a class="button button-secondary" href="../README.md">Read the README</a>
+          <a
+            class="button button-primary"
+            href="https://github.com/hoon-e/quota-creature/releases/download/v0.0.1-beta/QuotaCreature-v0.0.1-beta.dmg"
+          >Download beta</a>
+          <a class="button button-secondary" href="https://github.com/hoon-e/quota-creature">View on GitHub</a>
         </div>
       </div>
 
@@ -91,17 +95,21 @@
 
     <section class="section install" id="install" aria-labelledby="install-title">
       <div>
-        <p class="eyebrow">Source build</p>
+        <p class="eyebrow">Beta download</p>
         <h2 id="install-title">Install it on your Mac.</h2>
         <p>
-          The public repository address will replace the two placeholders below
-          when the project is published. Until then, run these commands from a
-          local checkout.
+          Download the Apple silicon DMG, drag QuotaCreature into Applications,
+          then launch it from Finder. The beta is ad-hoc signed but not
+          Apple-notarized, so the first launch may require Control-click → Open.
         </p>
       </div>
       <div class="code-stack">
-        <pre><code>git clone &lt;your-public-repository-url&gt;
-cd &lt;repository-directory&gt;
+        <a
+          class="button button-primary"
+          href="https://github.com/hoon-e/quota-creature/releases/download/v0.0.1-beta/QuotaCreature-v0.0.1-beta.dmg"
+        >Download v0.0.1-beta DMG</a>
+        <pre><code>git clone https://github.com/hoon-e/quota-creature.git
+cd quota-creature
 codex login
 swift test
 swift run QuotaCreature</code></pre>
@@ -179,10 +187,11 @@ open "$HOME/Applications/QuotaCreature.app"</code></pre>
           </p>
         </details>
         <details>
-          <summary>Why is there no download button?</summary>
+          <summary>Why does macOS show a security warning?</summary>
           <p>
-            This source-built project does not publish a binary, Homebrew Cask,
-            or updater yet. The install script builds a local app bundle.
+            The beta is ad-hoc signed but not Apple-notarized. Verify the
+            published checksum, then Control-click the app in Finder and choose
+            Open. See the <a href="./INSTALL.md">installation guide</a>.
           </p>
         </details>
       </div>
@@ -199,6 +208,7 @@ open "$HOME/Applications/QuotaCreature.app"</code></pre>
       <a href="../PRIVACY.md">Privacy</a>
       <a href="../SECURITY.md">Security</a>
       <a href="../LICENSE">MIT License</a>
+      <a href="https://github.com/hoon-e/quota-creature">GitHub</a>
     </nav>
   </footer>
 </body>

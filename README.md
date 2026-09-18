@@ -25,7 +25,19 @@ can detect a local CLI, but its usage reader is still being tested. The Claude
 selection does not invoke Claude, read Claude credentials or local files, or
 parse terminal output.
 
-## Quick start
+## Download the beta
+
+The `v0.0.1-beta` DMG supports Apple silicon Macs running macOS 14 or
+later. A logged-in Codex CLI is still required for usage data.
+
+[Download QuotaCreature v0.0.1-beta](https://github.com/hoon-e/quota-creature/releases/download/v0.0.1-beta/QuotaCreature-v0.0.1-beta.dmg)
+· [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v0.0.1-beta/QuotaCreature-v0.0.1-beta.dmg.sha256)
+
+Open the DMG and drag QuotaCreature into Applications. This beta is ad-hoc
+signed but not Apple-notarized, so macOS may require Control-clicking the app
+and choosing Open on first launch.
+
+## Build from source
 
 Requirements: macOS 14+, Xcode or the Swift 6.2 toolchain, and a logged-in
 Codex CLI that supports `codex app-server`.
@@ -43,8 +55,9 @@ Scripts/install.sh
 open "$HOME/Applications/QuotaCreature.app"
 ```
 
-The installer refuses to overwrite an existing app bundle. See
-[installation details](docs/INSTALL.md) for upgrade and removal guidance.
+The installer refuses to overwrite an existing app bundle. To build the DMG
+locally, run `Scripts/build-dmg.sh`. See [installation details](docs/INSTALL.md)
+for checksum, upgrade, and removal guidance.
 
 ## Privacy and security
 

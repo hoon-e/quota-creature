@@ -59,6 +59,22 @@ final class UsageSnapshotTests: XCTestCase {
         XCTAssertFalse(UsageViewState.unavailable(nil).showsLoadingIndicator)
     }
 
+    func testRemainingTimeIncludesDaysHoursAndMinutes() {
+        let now = Date(timeIntervalSince1970: 1_000)
+        let reset = now.addingTimeInterval(183_899)
+
+        XCTAssertEqual(remainingTime(until: reset, now: now), "2d 3h 4m")
+    }
+
+    func testExpiredRemainingTimeUsesZeroedUnits() {
+        let now = Date(timeIntervalSince1970: 1_000)
+
+        XCTAssertEqual(
+            remainingTime(until: now.addingTimeInterval(-1), now: now),
+            "0d 0h 0m"
+        )
+    }
+
     func testActivityStartsIdleThenBecomesActiveForSlowPositiveChange() throws {
         var tracker = UsageActivityTracker()
         let before = try rateLimitSnapshot(usedPercent: 10, resetsAt: 1_900_000_000)

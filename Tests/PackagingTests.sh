@@ -1,0 +1,60 @@
+#!/bin/zsh
+set -euo pipefail
+
+root_dir="${0:A:h:h}"
+build_app="$root_dir/Scripts/build-app.sh"
+build_dmg="$root_dir/Scripts/build-dmg.sh"
+
+[[ -x "$build_app" ]] || {
+    print -u2 "Missing executable: $build_app"
+    exit 1
+}
+[[ -x "$build_dmg" ]] || {
+    print -u2 "Missing executable: $build_dmg"
+    exit 1
+}
+
+test_root="$(mktemp -d "${TMPDIR:-/tmp}/quota-creature-package-test.XXXXXX")"
+mount_point="$test_root/mount"
+mounted=false
+
+cleanup() {
+    set +e
+    if $mounted; then
+        hdiutil detach "$mount_point" >/dev/null
+    fi
+    rm -rf "$test_root"
+}
+trap cleanup EXIT
+
+app="$test_root/QuotaCreature.app"
+"$build_app" "$app" "0.0.1" "0.0.1-beta"
+
+plist="$app/Contents/Info.plist"
+[[ -x "$app/Contents/MacOS/QuotaCreature" ]]
+[[ -f "$app/Contents/Resources/AppIcon.icns" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")" == "0.0.1" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleGetInfoString' "$plist")" == "QuotaCreature 0.0.1-beta" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconFile' "$plist")" == "AppIcon" ]]
+codesign --verify --deep --strict "$app"
+
+dmg="$test_root/QuotaCreature-v0.0.1-beta.dmg"
+"$build_dmg" "v0.0.1-beta" "$dmg"
+
+[[ -f "$dmg" ]]
+[[ -f "$dmg.sha256" ]]
+(
+    cd "${dmg:h}"
+    shasum -a 256 -c "${dmg:t}.sha256"
+)
+hdiutil verify "$dmg" >/dev/null
+
+mkdir "$mount_point"
+hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "$dmg" >/dev/null
+mounted=true
+
+[[ -d "$mount_point/QuotaCreature.app" ]]
+[[ -L "$mount_point/Applications" ]]
+[[ "$(readlink "$mount_point/Applications")" == "/Applications" ]]
+
+print "Packaging checks passed."

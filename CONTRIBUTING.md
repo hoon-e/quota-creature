@@ -6,6 +6,7 @@
 swift test
 swift build
 swift run QuotaCreature
+Tests/PackagingTests.sh
 ```
 
 Keep the project dependency-free unless a new dependency is justified in the
@@ -27,6 +28,10 @@ Add one `CreatureStyle` entry to `CreatureStyle.all` in
 
 Run `swift test` before opening a pull request. The catalog tests reject
 duplicate metadata, invalid frame sizes, and unsupported pixel characters.
+
+The packaging check creates and mounts a temporary DMG, verifies the app
+signature, icon, version metadata, Applications shortcut, and checksum, then
+removes its temporary files.
 
 ## Security boundaries
 

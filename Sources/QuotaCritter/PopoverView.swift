@@ -192,18 +192,13 @@ private struct MonthlyCreditLimitRow: View {
     }
 }
 
-private func remainingTime(until date: Date, now: Date = Date()) -> String {
+func remainingTime(until date: Date, now: Date = Date()) -> String {
     let seconds = max(0, Int(date.timeIntervalSince(now)))
-    let hours = seconds / 3_600
+    let days = seconds / 86_400
+    let hours = (seconds % 86_400) / 3_600
     let minutes = (seconds % 3_600) / 60
 
-    if hours > 0 {
-        return "\(hours)h \(minutes)m"
-    }
-    if minutes > 0 {
-        return "\(minutes)m"
-    }
-    return "under 1m"
+    return "\(days)d \(hours)h \(minutes)m"
 }
 
 private struct PixelCreatureView: View {

@@ -1,0 +1,43 @@
+name: Release DMG
+
+on:
+  push:
+    tags:
+      - v0.0.1-beta
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test
+        run: swift test
+
+      - name: Verify packaging
+        run: Tests/PackagingTests.sh
+
+      - name: Build release artifacts
+        run: Scripts/build-dmg.sh "$GITHUB_REF_NAME"
+
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          "dist/QuotaCreature-$GITHUB_REF_NAME.dmg"
+          "dist/QuotaCreature-$GITHUB_REF_NAME.dmg.sha256"
+          --verify-tag
+          --prerelease
+          --generate-notes
+          --title "QuotaCreature $GITHUB_REF_NAME"

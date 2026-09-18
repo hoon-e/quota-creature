@@ -20,6 +20,7 @@
 | Sensitive UI error output | Errors are mapped to one generic message; raw App Server text is never rendered or logged. |
 | Unwanted notification or usage persistence | Monthly-reset notifications are opt-in. The app stores only the preference and scheduled reset timestamp, never a usage history, account ID, or credential. |
 | Claude Code Beta access | Claude detection checks fixed executable locations only. It does not run Claude, read `~/.claude`, credentials, sessions, or logs, or capture terminal output. |
+| Release workflow compromise | The tag workflow pins the official checkout action to a full commit SHA, disables persisted Git credentials, uses only the repository-scoped `GITHUB_TOKEN`, and publishes a SHA-256 checksum. No third-party release action runs. |
 
 ## Scope limits
 
@@ -34,3 +35,7 @@ managed or high-security environments.
 Claude Code remains Beta until a documented, noninteractive, read-only usage
 response can be tested. There is no fallback to `claude -p`, browser
 automation, direct provider HTTP, or local-file parsing.
+
+The beta DMG is ad-hoc signed rather than Developer ID signed and notarized.
+The checksum detects accidental or post-release file changes but does not
+replace Apple notarization or establish the publisher's identity.
