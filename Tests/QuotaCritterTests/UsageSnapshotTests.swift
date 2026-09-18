@@ -115,6 +115,21 @@ final class UsageSnapshotTests: XCTestCase {
         XCTAssertEqual(PixelCreature.phase(for: .busy, at: 99, reduceMotion: true), 0)
     }
 
+    func testLeapFrameSpreadsItsFeetBeyondRestingFrame() {
+        let restingSpan = bodySpan(in: PixelCreature.frames[0], rows: 11...13)
+        let leapSpan = bodySpan(in: PixelCreature.frames[2], rows: 11...13)
+
+        XCTAssertGreaterThan(leapSpan, restingSpan)
+    }
+
+    func testCreatureFramesFitThe16By16Canvas() {
+        XCTAssertTrue(
+            PixelCreature.frames.allSatisfy { frame in
+                frame.count == 16 && frame.allSatisfy { $0.count == 16 }
+            }
+        )
+    }
+
     func testClaudePresentationDoesNotReuseCodexQuota() throws {
         let state = UsageViewState.ready(
             try rateLimitSnapshot(usedPercent: 50, resetsAt: 1_900_000_000)
@@ -137,5 +152,18 @@ final class UsageSnapshotTests: XCTestCase {
             ),
             secondary: nil
         )
+    }
+
+    private func bodySpan(in frame: [String], rows: ClosedRange<Int>) -> Int {
+        let columns = rows.flatMap { row in
+            frame[row].enumerated().compactMap { index, pixel in
+                pixel == "B" ? index : nil
+            }
+        }
+
+        guard let first = columns.min(), let last = columns.max() else {
+            return 0
+        }
+        return last - first + 1
     }
 }
