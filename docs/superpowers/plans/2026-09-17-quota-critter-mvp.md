@@ -105,7 +105,7 @@ git commit -m "feat: add validated Codex rate-limit model"
 - Produces AppServerRateLimitClient.readRateLimits() async -> Result<UsageSnapshot, UsageError>.
 - Later UI gets only UsageSnapshot or generic UsageError; it never gets process output.
 
-- [ ] **Step 1: Write failing trust-boundary tests**
+- [ ] **Step 1: Write a failing environment trust-boundary test**
 
 ~~~swift
 func testSanitizedEnvironmentKeepsOnlySafeVariables() {
@@ -118,20 +118,13 @@ func testSanitizedEnvironmentKeepsOnlySafeVariables() {
     ])
 }
 
-func testParserRejectsOversizedResponse() {
-    XCTAssertThrowsError(
-        try AppServerProtocol.parseRateLimitResponse(
-            Data(repeating: 0x20, count: 65_537)
-        )
-    )
-}
 ~~~
 
 - [ ] **Step 2: Run RED**
 
 Run: swift test --filter AppServerProtocolTests
 
-Expected: FAIL because filtering and 64 KiB protection are absent.
+Expected: FAIL because CodexExecutable.sanitizedEnvironment is absent. The 64 KiB parser behavior is already red-to-green covered in Task 1.
 
 - [ ] **Step 3: Implement the bounded reader**
 

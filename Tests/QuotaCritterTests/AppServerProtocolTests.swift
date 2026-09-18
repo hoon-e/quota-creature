@@ -40,4 +40,20 @@ final class AppServerProtocolTests: XCTestCase {
             )
         )
     }
+
+    func testSanitizedEnvironmentKeepsOnlySafeVariables() {
+        let safe = CodexExecutable.sanitizedEnvironment([
+            "HOME": "/Users/me",
+            "PATH": "/usr/bin",
+            "LANG": "en_US.UTF-8",
+            "CODEX_ACCESS_TOKEN": "secret",
+            "OPENAI_API_KEY": "secret"
+        ])
+
+        XCTAssertEqual(safe, [
+            "HOME": "/Users/me",
+            "PATH": "/usr/bin",
+            "LANG": "en_US.UTF-8"
+        ])
+    }
 }
