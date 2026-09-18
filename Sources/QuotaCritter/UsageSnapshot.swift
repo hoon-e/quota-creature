@@ -70,3 +70,36 @@ enum PetMood: String, CaseIterable, Equatable, Sendable {
         }
     }
 }
+
+enum UsageViewState: Equatable, Sendable {
+    case loading
+    case ready(UsageSnapshot)
+    case unavailable(UsageSnapshot?)
+
+    var snapshot: UsageSnapshot? {
+        switch self {
+        case .loading:
+            nil
+        case let .ready(snapshot):
+            snapshot
+        case let .unavailable(snapshot):
+            snapshot
+        }
+    }
+
+    var menuTitle: String {
+        snapshot.map { "\($0.primary.remainingPercent)%" } ?? "—"
+    }
+
+    var petMood: PetMood {
+        snapshot.map { PetMood(usedPercent: $0.primary.usedPercent) } ?? .bright
+    }
+
+    var errorMessage: String? {
+        if case .unavailable = self {
+            "Could not refresh Codex usage."
+        } else {
+            nil
+        }
+    }
+}

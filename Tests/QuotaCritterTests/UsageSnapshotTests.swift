@@ -26,4 +26,19 @@ final class UsageSnapshotTests: XCTestCase {
             )
         )
     }
+
+    func testUnavailableStateKeepsLastSnapshotAndHidesFailureDetails() throws {
+        let snapshot = UsageSnapshot(
+            primary: try RateLimitWindow(
+                usedPercent: 50,
+                windowDurationMins: 15,
+                resetsAt: 1_900_000_000
+            )
+        )
+        let state = UsageViewState.unavailable(snapshot)
+
+        XCTAssertEqual(state.menuTitle, "50%")
+        XCTAssertEqual(state.petMood, .focused)
+        XCTAssertEqual(state.errorMessage, "Could not refresh Codex usage.")
+    }
 }

@@ -153,23 +153,42 @@ git commit -m "feat: read Codex limits over local stdio"
 - Consumes AppServerRateLimitClient.readRateLimits(), UsageSnapshot, and PetMood.
 - Produces one MenuBarExtra with pixel creature, percent, popover, Refresh, and Quit.
 
-- [ ] **Step 1: Re-run the state-mapping tests before adding presentation wiring**
+- [ ] **Step 1: Write a failing last-valid-state test**
+
+~~~swift
+func testUnavailableStateKeepsLastSnapshotAndHidesFailureDetails() throws {
+    let snapshot = UsageSnapshot(
+        primary: try RateLimitWindow(
+            usedPercent: 50,
+            windowDurationMins: 15,
+            resetsAt: 1_900_000_000
+        )
+    )
+    let state = UsageViewState.unavailable(snapshot)
+
+    XCTAssertEqual(state.menuTitle, "50%")
+    XCTAssertEqual(state.petMood, .focused)
+    XCTAssertEqual(state.errorMessage, "Could not refresh Codex usage.")
+}
+~~~
+
+- [ ] **Step 2: Run RED**
 
 Run: swift test --filter UsageSnapshotTests
 
-Expected: PASS. Task 3 adds native framework presentation only; its percentage, mood, and failure-state logic was already driven red-to-green in Tasks 1 and 2, so no brittle rendering-source test is added.
+Expected: FAIL because UsageViewState is absent.
 
-- [ ] **Step 2: Implement the minimal native UI**
+- [ ] **Step 3: Implement the state model and minimal native UI**
 
 Use an accessory SwiftUI app and one MenuBarExtra. Refresh at launch and every 60 seconds; tick an in-memory clock every second. Draw the original indigo antennaed creature from constant Canvas pixels, create a template NSImage for the menu bar, and map the five PetMood states to expression colors. The popover shows remaining percentage, reset time, optional secondary window, Refresh, Quit, and a local-only privacy footer. Keep the last valid snapshot on a failure and show only “Could not refresh Codex usage.”
 
-- [ ] **Step 3: Run build gates**
+- [ ] **Step 4: Run build gates**
 
 Run: swift test && swift build
 
 Expected: PASS and a QuotaCritter executable under .build.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ~~~bash
 git add Sources/QuotaCritter/QuotaCritterApp.swift Sources/QuotaCritter/PopoverView.swift Tests/QuotaCritterTests/UsageSnapshotTests.swift
