@@ -121,10 +121,12 @@ The code must not:
 
 - Start an absolute `codex` executable with `Process`, not a shell. The
   argument array is constant: `app-server`, `--listen`, `stdio://`.
-- Locate `codex` only from the inherited `PATH`, verify it is an executable
-  regular file, and never make that path editable in the UI.
+- Locate `codex` from absolute inherited `PATH` entries plus fixed conventional
+  local locations (`~/.local/bin`, Homebrew, `/usr/local/bin`, and the user's
+  NVM node-version directories), verify it is executable, and never make that
+  path editable in the UI.
 - Give the child a sanitized environment containing only `HOME`, `PATH`,
-  `TMPDIR`, `LANG`, and `LC_*`; explicitly omit credential-bearing variables
+  `TMPDIR`, and `LANG`; explicitly omit credential-bearing variables
   such as `CODEX_ACCESS_TOKEN` and `OPENAI_API_KEY`.
 - Use a fresh child process for each refresh, terminate it after the matching
   response, and fail closed after an 8-second deadline.

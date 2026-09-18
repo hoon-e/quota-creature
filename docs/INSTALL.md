@@ -4,7 +4,8 @@
 
 - macOS 14 or later.
 - Xcode or a Swift 6.2-compatible toolchain.
-- Codex CLI on an absolute entry in `PATH` and already logged in.
+- Codex CLI already logged in. The app checks absolute `PATH` entries plus
+  common Homebrew, `~/.local/bin`, `/usr/local/bin`, and NVM installations.
 
 Check the local tools before building:
 

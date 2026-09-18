@@ -11,7 +11,7 @@
 
 | Threat | Control |
 | --- | --- |
-| Command injection | The UI never accepts a command or executable path. `Process` uses fixed arguments and an absolute executable found only in absolute `PATH` entries. |
+| Command injection | The UI never accepts a command or executable path. `Process` uses fixed arguments and an absolute executable from absolute `PATH` entries or fixed conventional local install locations. |
 | Credential leakage through environment | The child receives only `HOME`, `PATH`, `TMPDIR`, and `LANG`; token/API-key variables are omitted. |
 | Credential or transcript scraping | The app contains no auth-file, Keychain, session-directory, prompt, or workspace-file reader. |
 | Untrusted or oversized JSON | Stdout is capped at 64 KiB. JSON is decoded strictly, response id must match, and rate values must be finite and in range. |

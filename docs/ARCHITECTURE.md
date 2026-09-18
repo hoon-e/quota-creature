@@ -27,5 +27,7 @@ Refresh.
 
 The child gets a filtered environment containing only `HOME`, `PATH`,
 `TMPDIR`, and `LANG`. No credential-bearing environment variable is copied.
-The app does not parse `~/.codex`, Keychain data, session files, prompts, or
-account identity.
+The app resolves `codex` from absolute `PATH` entries and a small fixed list of
+conventional local install locations, including NVM node-version directories.
+It does not parse `~/.codex`, Keychain data, session files, prompts, or account
+identity.

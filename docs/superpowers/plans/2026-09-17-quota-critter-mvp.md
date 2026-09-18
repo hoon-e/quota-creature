@@ -15,7 +15,7 @@
 - Target macOS 14 or later; use only Apple frameworks already shipped with Xcode.
 - No URLSession, WebSocket, listener, telemetry, analytics, updater, Keychain, UserDefaults, or third-party package.
 - Never read, log, store, or display credentials, prompts, transcripts, account identity, or raw App Server errors.
-- Launch only an absolute verified codex executable with constant arguments: app-server, --listen, stdio://.
+- Launch only an absolute verified codex executable from absolute PATH entries or fixed conventional local install locations, with constant arguments: app-server, --listen, stdio://.
 - Send only initialize, initialized, and account/rateLimits/read; reject malformed, oversized, wrong-id, or invalid data.
 - Poll at launch and every 60 seconds; use a local one-second clock solely for countdown text.
 - Display remaining percentage and reset time, never invented global token totals.

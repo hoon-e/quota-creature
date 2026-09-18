@@ -78,20 +78,47 @@ enum CodexExecutable {
     }
 
     static func locate() throws -> URL {
-        guard let path = environmentValue(for: "PATH") else {
+        guard let homePath = environmentValue(for: "HOME"), homePath.hasPrefix("/") else {
             throw UsageError.codexNotFound
         }
+        let home = URL(fileURLWithPath: homePath)
 
-        for entry in path.split(separator: ":") where entry.hasPrefix("/") {
-            let candidate = URL(fileURLWithPath: String(entry))
-                .appendingPathComponent("codex")
-                .standardizedFileURL
+        for candidate in candidatePaths(
+            path: environmentValue(for: "PATH"),
+            home: home,
+            nvmVersions: nvmVersions(in: home)
+        ) {
             if FileManager.default.isExecutableFile(atPath: candidate.path) {
                 return candidate
             }
         }
 
         throw UsageError.codexNotFound
+    }
+
+    static func candidatePaths(path: String?, home: URL, nvmVersions: [String]) -> [URL] {
+        let pathCandidates = (path ?? "").split(separator: ":").compactMap { entry -> URL? in
+            guard entry.hasPrefix("/") else {
+                return nil
+            }
+            return URL(fileURLWithPath: String(entry))
+                .appendingPathComponent("codex")
+                .standardizedFileURL
+        }
+        let knownCandidates = [
+            home.appendingPathComponent(".local/bin/codex"),
+            URL(fileURLWithPath: "/opt/homebrew/bin/codex"),
+            URL(fileURLWithPath: "/usr/local/bin/codex")
+        ]
+        let nvmCandidates = nvmVersions.map {
+            home.appendingPathComponent(".nvm/versions/node/\($0)/bin/codex")
+        }
+
+        return (pathCandidates + knownCandidates + nvmCandidates).reduce(into: []) { paths, candidate in
+            if !paths.contains(candidate) {
+                paths.append(candidate)
+            }
+        }
     }
 
     private static func environmentValue(for key: String) -> String? {
@@ -101,6 +128,19 @@ enum CodexExecutable {
             }
             return String(cString: value)
         }
+    }
+
+    private static func nvmVersions(in home: URL) -> [String] {
+        let nodeRoot = home.appendingPathComponent(".nvm/versions/node")
+        return (try? FileManager.default.contentsOfDirectory(
+            at: nodeRoot,
+            includingPropertiesForKeys: [.isDirectoryKey]
+        ))?.compactMap { url in
+            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else {
+                return nil
+            }
+            return url.lastPathComponent
+        } ?? []
     }
 }
 
