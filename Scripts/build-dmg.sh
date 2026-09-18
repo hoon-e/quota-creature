@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root_dir="${0:A:h:h}"
-release_tag="${1:-v0.0.2-beta}"
+release_tag="${1:-v0.0.3-beta}"
 output="${2:-$root_dir/dist/QuotaCreature-$release_tag.dmg}"
 background="$root_dir/Assets/DMG/installer.png"
 finder_layout="$root_dir/Assets/DMG/DS_Store"

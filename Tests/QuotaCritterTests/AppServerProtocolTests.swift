@@ -91,6 +91,47 @@ final class AppServerProtocolTests: XCTestCase {
         )
     }
 
+    func testLoginShellFindsCodexOutsideKnownLocations() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let bin = root.appendingPathComponent("custom/bin", isDirectory: true)
+        let codex = bin.appendingPathComponent("codex")
+        let shell = root.appendingPathComponent("login-shell")
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
+        try Data("#!/bin/sh\n".utf8).write(to: codex)
+        try Data("#!/bin/sh\nprintf '%s\\n' '\(codex.path)'\n".utf8).write(to: shell)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755],
+            ofItemAtPath: codex.path
+        )
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755],
+            ofItemAtPath: shell.path
+        )
+
+        let candidate = CodexExecutable.loginShellCandidate(
+            path: "/usr/bin:/bin",
+            home: root,
+            shell: shell
+        )
+
+        XCTAssertEqual(candidate, codex)
+    }
+
+    func testRuntimeEnvironmentPrependsResolvedCodexDirectory() {
+        let originalPath = ProcessInfo.processInfo.environment["PATH"]
+        setenv("PATH", "/usr/bin:/bin", 1)
+        defer { restoreEnvironment("PATH", to: originalPath) }
+
+        let environment = CodexExecutable.runtimeEnvironment(
+            for: URL(fileURLWithPath: "/custom/node/bin/codex")
+        )
+
+        XCTAssertEqual(environment["PATH"], "/custom/node/bin:/usr/bin:/bin")
+    }
+
     func testClaudeCandidatePathsIncludeKnownNvmInstallation() {
         let candidates = ClaudeExecutable.candidatePaths(
             path: "/usr/bin:/usr/local/bin",
@@ -106,5 +147,13 @@ final class AppServerProtocolTests: XCTestCase {
         XCTAssertTrue(
             candidates.contains(URL(fileURLWithPath: "/opt/homebrew/bin/claude"))
         )
+    }
+
+    private func restoreEnvironment(_ name: String, to value: String?) {
+        if let value {
+            setenv(name, value, 1)
+        } else {
+            unsetenv(name)
+        }
     }
 }

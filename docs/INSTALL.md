@@ -4,7 +4,8 @@
 
 - macOS 14 or later.
 - Codex CLI already logged in. The app checks absolute `PATH` entries plus
-  common Homebrew, `~/.local/bin`, `/usr/local/bin`, and NVM installations.
+  common local installations, then asks the user's login shell for
+  `command -v codex` when those paths do not contain the CLI.
 - The downloadable beta is built for Apple silicon. Building from source uses
   the current Mac architecture and requires Xcode or a Swift 6.2-compatible
   toolchain.
@@ -27,14 +28,14 @@ Its absence does not affect Codex usage. If it is present, QuotaCreature shows
 the Claude Code Beta status card without launching Claude or reading its local
 credentials, sessions, logs, or terminal output.
 
-## Install v0.0.2-beta
+## Install v0.0.3-beta
 
-Download the [DMG](https://github.com/hoon-e/quota-creature/releases/download/v0.0.2-beta/QuotaCreature-v0.0.2-beta.dmg)
-and its [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v0.0.2-beta/QuotaCreature-v0.0.2-beta.dmg.sha256).
+Download the [DMG](https://github.com/hoon-e/quota-creature/releases/download/v0.0.3-beta/QuotaCreature-v0.0.3-beta.dmg)
+and its [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v0.0.3-beta/QuotaCreature-v0.0.3-beta.dmg.sha256).
 To verify files downloaded into the same directory:
 
 ```zsh
-shasum -a 256 -c QuotaCreature-v0.0.2-beta.dmg.sha256
+shasum -a 256 -c QuotaCreature-v0.0.3-beta.dmg.sha256
 ```
 
 Open the DMG and drag `QuotaCreature.app` onto the Applications shortcut. The
@@ -79,7 +80,7 @@ quit the old app, move its bundle to Trash in Finder, then run the script again.
 To build release artifacts locally:
 
 ```zsh
-Scripts/build-dmg.sh v0.0.2-beta
+Scripts/build-dmg.sh v0.0.3-beta
 ```
 
 The DMG and checksum are written under `dist/`.

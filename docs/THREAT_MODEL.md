@@ -11,11 +11,11 @@
 
 | Threat | Control |
 | --- | --- |
-| Command injection | The UI never accepts a command or executable path. `Process` uses fixed arguments and an absolute executable from absolute `PATH` entries or fixed conventional local install locations. |
-| Credential leakage through environment | The child receives only `HOME`, `PATH`, `TMPDIR`, and `LANG`; token/API-key variables are omitted. |
+| Command injection | The UI never accepts a command or executable path. Known absolute paths are tried first; the fallback runs only the fixed `command -v codex` command in the user's login shell and accepts only an executable absolute path. |
+| Credential leakage through environment | Shell discovery and the CLI child receive only `HOME`, `PATH`, `TMPDIR`, and `LANG`; token/API-key variables are omitted. The resolved executable directory is prepended to the child `PATH` for Node-based wrappers. |
 | Credential or transcript scraping | The app contains no auth-file, Keychain, session-directory, prompt, or workspace-file reader. |
 | Untrusted or oversized JSON | Stdout is capped at 64 KiB. JSON is decoded strictly, response id must match, and rate/credit values must be finite and in range. |
-| Stuck child process | A new child is used per refresh, terminates after the matching response, and has an eight-second watchdog. |
+| Stuck child process | Login-shell discovery and the per-refresh app-server child each have an eight-second watchdog. The child terminates after the matching response. |
 | Network exposure | The companion opens no listener and uses no HTTP/WebSocket client. App Server communication is local stdio only. |
 | Sensitive UI error output | Errors are mapped to one generic message; raw App Server text is never rendered or logged. |
 | Unwanted notification or usage persistence | Monthly-reset notifications are opt-in. The app stores only the preference and scheduled reset timestamp, never a usage history, account ID, or credential. |

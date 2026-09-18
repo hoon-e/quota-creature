@@ -7,8 +7,8 @@ if (( $# < 1 || $# > 3 )); then
 fi
 
 destination="${1:A}"
-app_version="${2:-0.0.2}"
-release_label="${3:-0.0.2-beta}"
+app_version="${2:-0.0.3}"
+release_label="${3:-0.0.3-beta}"
 
 if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     print -u2 "Invalid app version: $app_version"

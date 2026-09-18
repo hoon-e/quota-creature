@@ -137,12 +137,18 @@ enum CodexExecutable {
         })
     }
 
-    static func runtimeEnvironment() -> [String: String] {
-        sanitizedEnvironment(
-            Dictionary(uniqueKeysWithValues: allowedEnvironmentKeys.compactMap { key in
+    static func runtimeEnvironment(for executable: URL? = nil) -> [String: String] {
+        var environment = Dictionary(
+            uniqueKeysWithValues: allowedEnvironmentKeys.compactMap { key in
                 environmentValue(for: key).map { (key, $0) }
-            })
+            }
         )
+        if let executable {
+            let directory = executable.deletingLastPathComponent().path
+            let path = environment["PATH"] ?? ""
+            environment["PATH"] = path.isEmpty ? directory : "\(directory):\(path)"
+        }
+        return sanitizedEnvironment(environment)
     }
 
     static func locate() throws -> URL {
@@ -150,15 +156,25 @@ enum CodexExecutable {
             throw UsageError.codexNotFound
         }
         let home = URL(fileURLWithPath: homePath)
+        let path = environmentValue(for: "PATH")
 
         for candidate in candidatePaths(
-            path: environmentValue(for: "PATH"),
+            path: path,
             home: home,
             nvmVersions: nvmVersions(in: home)
         ) {
             if FileManager.default.isExecutableFile(atPath: candidate.path) {
                 return candidate
             }
+        }
+
+        let shellPath = environmentValue(for: "SHELL") ?? "/bin/zsh"
+        if let candidate = loginShellCandidate(
+            path: path,
+            home: home,
+            shell: URL(fileURLWithPath: shellPath)
+        ) {
+            return candidate
         }
 
         throw UsageError.codexNotFound
@@ -184,6 +200,64 @@ enum CodexExecutable {
 
     private static func nvmVersions(in home: URL) -> [String] {
         LocalExecutable.nvmVersions(in: home)
+    }
+
+    static func loginShellCandidate(path: String?, home: URL, shell: URL) -> URL? {
+        guard shell.path.hasPrefix("/"),
+              FileManager.default.isExecutableFile(atPath: shell.path)
+        else {
+            return nil
+        }
+
+        let process = Process()
+        let output = Pipe()
+        process.executableURL = shell
+        process.arguments = ["-ilc", "command -v codex 2>/dev/null"]
+        process.environment = sanitizedEnvironment([
+            "HOME": home.path,
+            "PATH": path ?? "/usr/bin:/bin",
+            "TMPDIR": environmentValue(for: "TMPDIR") ?? "/tmp",
+            "LANG": environmentValue(for: "LANG") ?? "C.UTF-8"
+        ])
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+
+        let timeout = DispatchWorkItem {
+            if process.isRunning {
+                process.terminate()
+            }
+        }
+        DispatchQueue.global(qos: .utility).asyncAfter(
+            deadline: .now() + 8,
+            execute: timeout
+        )
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        timeout.cancel()
+
+        guard process.terminationStatus == 0,
+              let text = String(data: data, encoding: .utf8)
+        else {
+            return nil
+        }
+
+        for line in text.split(whereSeparator: \.isNewline).reversed() {
+            let path = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard path.hasPrefix("/"),
+                  FileManager.default.isExecutableFile(atPath: path)
+            else {
+                continue
+            }
+            return URL(fileURLWithPath: path).standardizedFileURL
+        }
+        return nil
     }
 }
 
@@ -236,19 +310,20 @@ private final class AppServerRateLimitRunner: @unchecked Sendable {
             self?.timeOut()
         }
 
-        DispatchQueue.global(qos: .utility).asyncAfter(
-            deadline: .now() + 8,
-            execute: timeout
-        )
         defer {
             timeout.cancel()
             stopChild()
         }
 
         do {
-            process.executableURL = try CodexExecutable.locate()
+            let executable = try CodexExecutable.locate()
+            DispatchQueue.global(qos: .utility).asyncAfter(
+                deadline: .now() + 8,
+                execute: timeout
+            )
+            process.executableURL = executable
             process.arguments = ["app-server", "--listen", "stdio://"]
-            process.environment = CodexExecutable.runtimeEnvironment()
+            process.environment = CodexExecutable.runtimeEnvironment(for: executable)
             process.standardInput = input
             process.standardOutput = output
             process.standardError = FileHandle.nullDevice

@@ -55,7 +55,10 @@ already scheduled, so minute-by-minute refreshes cannot duplicate it.
 
 The child gets a filtered environment containing only `HOME`, `PATH`,
 `TMPDIR`, and `LANG`. No credential-bearing environment variable is copied.
-The app resolves `codex` from absolute `PATH` entries and a small fixed list of
-conventional local install locations, including NVM node-version directories.
-It does not parse `~/.codex`, Keychain data, session files, prompts, or account
-identity.
+The app first resolves `codex` from absolute `PATH` entries and conventional
+local install locations, including NVM node-version directories. If none is
+executable, it runs the fixed command `command -v codex` in the user's login
+shell and accepts only an executable absolute path. It then launches that path
+directly, with its parent directory prepended to the filtered child `PATH` so
+Node-based CLI wrappers can find their adjacent runtime. It does not parse
+`~/.codex`, Keychain data, session files, prompts, or account identity.
