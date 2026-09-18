@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 
 enum MonthlyResetReminder {
     static let leadTime: TimeInterval = 7 * 24 * 3_600
