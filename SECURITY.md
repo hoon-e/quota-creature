@@ -15,7 +15,7 @@ GitHub without posting technical details publicly.
 
 ## Security promises
 
-Quota Critter intentionally has no direct network client, no telemetry, no
+QuotaCreature intentionally has no direct network client, no telemetry, no
 credential store, no auth-file parser, and no arbitrary command execution.
 These controls reduce known risks; they are not a guarantee that future
 vulnerabilities cannot exist. Security-impacting changes require an update to

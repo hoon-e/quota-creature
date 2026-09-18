@@ -1,4 +1,4 @@
-# Quota Critter MVP Implementation Plan
+# QuotaCreature MVP Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
@@ -74,7 +74,7 @@ Add a macOS 14 executable/test package. Use three constant JSON strings:
 
 ~~~swift
 static let requestLines = [
-    #"{"method":"initialize","id":1,"params":{"clientInfo":{"name":"quota-critter","title":"Quota Critter","version":"0.1.0"}}}"#,
+    #"{"method":"initialize","id":1,"params":{"clientInfo":{"name":"quota-creature","title":"QuotaCreature","version":"0.1.0"}}}"#,
     #"{"method":"initialized","params":{}}"#,
     #"{"method":"account/rateLimits/read","id":2}"#
 ]
@@ -186,13 +186,13 @@ Use an accessory SwiftUI app and one MenuBarExtra. Refresh at launch and every 6
 
 Run: swift test && swift build
 
-Expected: PASS and a QuotaCritter executable under .build.
+Expected: PASS and a QuotaCreature executable under .build.
 
 - [ ] **Step 5: Commit**
 
 ~~~bash
 git add Sources/QuotaCritter/QuotaCritterApp.swift Sources/QuotaCritter/PopoverView.swift Tests/QuotaCritterTests/UsageSnapshotTests.swift
-git commit -m "feat: add Quota Critter menu bar UI"
+git commit -m "feat: add QuotaCreature menu bar UI"
 ~~~
 
 ### Task 4: Safe local installation and open-source documents
@@ -209,14 +209,14 @@ git commit -m "feat: add Quota Critter menu bar UI"
 - Create: LICENSE
 
 **Interfaces:**
-- Produces a non-overwriting $HOME/Applications/QuotaCritter.app bundle and auditable public documentation.
+- Produces a non-overwriting $HOME/Applications/QuotaCreature.app bundle and auditable public documentation.
 
 - [ ] **Step 1: Write the installer safety check**
 
 ~~~zsh
 temp_home="$(mktemp -d)"
 HOME="$temp_home" Scripts/install.sh
-test -x "$temp_home/Applications/QuotaCritter.app/Contents/MacOS/QuotaCritter"
+test -x "$temp_home/Applications/QuotaCreature.app/Contents/MacOS/QuotaCreature"
 HOME="$temp_home" Scripts/install.sh && exit 1
 ~~~
 
@@ -232,7 +232,7 @@ The script builds release output, refuses if the exact app path exists, creates 
 
 - [ ] **Step 4: Validate in a temporary home**
 
-Run: zsh -n Scripts/install.sh && temp_home="$(mktemp -d)" && HOME="$temp_home" Scripts/install.sh && test -x "$temp_home/Applications/QuotaCritter.app/Contents/MacOS/QuotaCritter" && ! HOME="$temp_home" Scripts/install.sh
+Run: zsh -n Scripts/install.sh && temp_home="$(mktemp -d)" && HOME="$temp_home" Scripts/install.sh && test -x "$temp_home/Applications/QuotaCreature.app/Contents/MacOS/QuotaCreature" && ! HOME="$temp_home" Scripts/install.sh
 
 Expected: first install creates the executable bundle; second install refuses to overwrite it.
 
@@ -240,7 +240,7 @@ Expected: first install creates the executable bundle; second install refuses to
 
 ~~~bash
 git add Scripts/install.sh README.md docs/INSTALL.md docs/ARCHITECTURE.md docs/THREAT_MODEL.md SECURITY.md PRIVACY.md CONTRIBUTING.md LICENSE
-git commit -m "docs: prepare Quota Critter for open source"
+git commit -m "docs: prepare QuotaCreature for open source"
 ~~~
 
 ### Task 5: Final verification and real local install
@@ -262,7 +262,7 @@ Expected: only the documented fixed Process/App Server path, parser tests, and e
 
 - [ ] **Step 3: Run a bounded UI smoke test**
 
-Run: swift run QuotaCritter
+Run: swift run QuotaCreature
 
 Expected: menu-bar creature appears; clicking it opens the popover; authenticated usage appears or a generic no-detail error appears.
 
@@ -270,7 +270,7 @@ Expected: menu-bar creature appears; clicking it opens the popover; authenticate
 
 Run: Scripts/install.sh
 
-Expected: $HOME/Applications/QuotaCritter.app exists without replacing an existing app.
+Expected: $HOME/Applications/QuotaCreature.app exists without replacing an existing app.
 
 - [ ] **Step 5: Record the final repository state**
 

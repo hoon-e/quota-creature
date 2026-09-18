@@ -1,10 +1,10 @@
-# Quota Critter
+# QuotaCreature
 
 A tiny, local-only macOS menu-bar creature for the current Codex usage window.
 It shows remaining percentage and reset time; it does not invent a global
 “tokens remaining / total” number that Codex does not provide.
 
-Quota Critter is unofficial and is not affiliated with or endorsed by OpenAI.
+QuotaCreature is unofficial and is not affiliated with or endorsed by OpenAI.
 
 ## What it does
 
@@ -22,14 +22,14 @@ Codex CLI that supports `codex app-server`.
 ```zsh
 codex login
 swift test
-swift run QuotaCritter
+swift run QuotaCreature
 ```
 
 To make a local app bundle:
 
 ```zsh
 Scripts/install.sh
-open "$HOME/Applications/QuotaCritter.app"
+open "$HOME/Applications/QuotaCreature.app"
 ```
 
 The installer refuses to overwrite an existing app bundle. See
@@ -37,7 +37,7 @@ The installer refuses to overwrite an existing app bundle. See
 
 ## Privacy and security
 
-Quota Critter starts a short-lived local `codex app-server --listen stdio://`
+QuotaCreature starts a short-lived local `codex app-server --listen stdio://`
 child process. It sends only the App Server handshake and
 `account/rateLimits/read`; it never starts a Codex thread, runs a turn, reads
 your auth files, or opens a local network port. The companion has no direct

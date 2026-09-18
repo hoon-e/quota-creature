@@ -5,7 +5,7 @@
 ```zsh
 swift test
 swift build
-swift run QuotaCritter
+swift run QuotaCreature
 ```
 
 Keep the project dependency-free unless a new dependency is justified in the

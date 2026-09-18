@@ -102,4 +102,12 @@ enum UsageViewState: Equatable, Sendable {
             nil
         }
     }
+
+    var showsLoadingIndicator: Bool {
+        if case .loading = self {
+            true
+        } else {
+            false
+        }
+    }
 }

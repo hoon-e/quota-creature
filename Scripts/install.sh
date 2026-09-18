@@ -7,7 +7,7 @@ if [[ -z "${HOME:-}" || "$HOME" != /* ]]; then
 fi
 
 root_dir="${0:A:h:h}"
-destination="$HOME/Applications/QuotaCritter.app"
+destination="$HOME/Applications/QuotaCreature.app"
 
 if [[ -e "$destination" ]]; then
   print -u2 "Refusing to overwrite existing app: $destination"
@@ -17,7 +17,7 @@ fi
 cd "$root_dir"
 swift build -c release
 bin_dir="$(swift build -c release --show-bin-path)"
-binary="$bin_dir/QuotaCritter"
+binary="$bin_dir/QuotaCreature"
 
 if [[ ! -x "$binary" ]]; then
   print -u2 "Release binary was not produced: $binary"
@@ -26,18 +26,18 @@ fi
 
 contents="$destination/Contents"
 /usr/bin/install -d -m 755 "$contents/MacOS"
-/usr/bin/install -m 755 "$binary" "$contents/MacOS/QuotaCritter"
+/usr/bin/install -m 755 "$binary" "$contents/MacOS/QuotaCreature"
 /usr/bin/tee "$contents/Info.plist" >/dev/null <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key>
-  <string>QuotaCritter</string>
+  <string>QuotaCreature</string>
   <key>CFBundleIdentifier</key>
-  <string>com.quotacrit.Quotacritter</string>
+  <string>com.quotacreature.quotacreature</string>
   <key>CFBundleName</key>
-  <string>Quota Critter</string>
+  <string>QuotaCreature</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

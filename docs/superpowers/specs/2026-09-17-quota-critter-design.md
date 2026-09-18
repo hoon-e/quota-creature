@@ -1,8 +1,8 @@
-# Quota Critter MVP Design
+# QuotaCreature MVP Design
 
 ## Purpose
 
-Quota Critter is an unofficial, local-only macOS menu-bar companion for
+QuotaCreature is an unofficial, local-only macOS menu-bar companion for
 Codex usage windows. It turns the current remaining percentage and reset
 time into a small pixel creature instead of pretending that Codex exposes a
 fixed, global token allowance.
@@ -12,7 +12,7 @@ not a hosted service, browser extension, or remote-control client.
 
 ## Decisions
 
-- Product name: **Quota Critter**. It is described as “for Codex” but is not
+- Product name: **QuotaCreature**. It is described as “for Codex” but is not
   affiliated with or endorsed by OpenAI.
 - License: MIT.
 - Platform: macOS 14 or later, Swift 6.2, SwiftUI/AppKit, no third-party
@@ -67,7 +67,7 @@ quiet and CPU use negligible while still making usage changes visible.
 ## Data model and flow
 
 ```
-Quota Critter UI
+QuotaCreature UI
       │ refresh request
       ▼
 short-lived local Process: codex app-server --listen stdio://
@@ -167,7 +167,7 @@ LICENSE
 ```
 
 The installer must refuse to overwrite an existing app bundle. It creates
-`$HOME/Applications/QuotaCritter.app` only when that exact path does not
+`$HOME/Applications/QuotaCreature.app` only when that exact path does not
 already exist; upgrades remain an explicit user action.
 
 ## Verification
@@ -179,7 +179,7 @@ Automated tests use hand-written, sanitized JSON fixtures. They cover:
 - the exact fixed outbound App Server message set;
 - remaining-percentage calculation and all five pet-state boundaries.
 
-The local smoke test is `swift test`, then `swift run QuotaCritter` with an
+The local smoke test is `swift test`, then `swift run QuotaCreature` with an
 already logged-in Codex CLI. The manual acceptance check confirms that a menu
 bar icon appears, the popover refreshes, a login/error state reveals no raw
 details, and no local network listener is opened by the app.

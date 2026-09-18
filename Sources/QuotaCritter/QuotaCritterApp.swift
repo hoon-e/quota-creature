@@ -3,7 +3,7 @@ import Combine
 import SwiftUI
 
 @main
-struct QuotaCritterApp: App {
+struct QuotaCreatureApp: App {
     @StateObject private var store = UsageStore()
 
     init() {
@@ -20,7 +20,7 @@ struct QuotaCritterApp: App {
                 Text(store.state.menuTitle)
                     .monospacedDigit()
             }
-            .accessibilityLabel("Quota Critter \(store.state.menuTitle)")
+            .accessibilityLabel("QuotaCreature \(store.state.menuTitle)")
         }
         .menuBarExtraStyle(.window)
     }

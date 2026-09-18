@@ -11,7 +11,7 @@ struct PopoverView: View {
                     .frame(width: 86, height: 86)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Quota Critter")
+                    Text("QuotaCreature")
                         .font(.headline)
                     Text(store.state.menuTitle)
                         .font(.system(size: 32, weight: .bold, design: .rounded))
@@ -25,11 +25,18 @@ struct PopoverView: View {
 
             if let primary = store.state.snapshot?.primary {
                 RateLimitRow(title: "Primary window", window: primary, now: store.currentDate)
-            } else {
+            } else if store.state.showsLoadingIndicator {
                 HStack(spacing: 8) {
                     ProgressView()
                         .controlSize(.small)
                     Text("Refreshing Codex usage…")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle")
+                    Text("Usage unavailable")
                         .foregroundStyle(.secondary)
                     Spacer()
                 }
@@ -122,7 +129,7 @@ private struct PixelCreatureView: View {
                 context.fill(Path(rect), with: .color(PixelCreature.color(for: pixel.tone)))
             }
         }
-        .accessibilityLabel("\(mood.rawValue) Quota Critter")
+        .accessibilityLabel("\(mood.rawValue) QuotaCreature")
     }
 }
 

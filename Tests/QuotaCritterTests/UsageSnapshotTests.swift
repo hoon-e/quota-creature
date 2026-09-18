@@ -41,4 +41,9 @@ final class UsageSnapshotTests: XCTestCase {
         XCTAssertEqual(state.petMood, .focused)
         XCTAssertEqual(state.errorMessage, "Could not refresh Codex usage.")
     }
+
+    func testOnlyInitialStateShowsLoadingIndicator() {
+        XCTAssertTrue(UsageViewState.loading.showsLoadingIndicator)
+        XCTAssertFalse(UsageViewState.unavailable(nil).showsLoadingIndicator)
+    }
 }

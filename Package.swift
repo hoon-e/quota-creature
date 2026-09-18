@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "QuotaCritter",
+    name: "QuotaCreature",
     platforms: [.macOS(.v14)],
-    products: [.executable(name: "QuotaCritter", targets: ["QuotaCritter"])],
+    products: [.executable(name: "QuotaCreature", targets: ["QuotaCritter"])],
     targets: [
         .executableTarget(name: "QuotaCritter"),
         .testTarget(name: "QuotaCritterTests", dependencies: ["QuotaCritter"])

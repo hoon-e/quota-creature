@@ -22,7 +22,7 @@
 ## Scope limits
 
 Someone who can replace the user’s `codex` executable or modify the user’s
-`PATH` already controls that local user environment. Quota Critter reduces its
+`PATH` already controls that local user environment. QuotaCreature reduces its
 own attack surface but cannot make a compromised local account trustworthy.
 
 This source-built MVP is not sandboxed for the Mac App Store because it must
