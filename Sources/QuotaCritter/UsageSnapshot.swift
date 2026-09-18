@@ -38,13 +38,71 @@ struct RateLimitWindow: Equatable, Sendable {
     }
 }
 
-struct UsageSnapshot: Equatable, Sendable {
-    let primary: RateLimitWindow
-    let secondary: RateLimitWindow?
+struct MonthlyCreditLimit: Equatable, Sendable {
+    let total: Double
+    let used: Double
+    let remainingPercent: Int
+    let resetsAt: TimeInterval
 
-    init(primary: RateLimitWindow, secondary: RateLimitWindow? = nil) {
-        self.primary = primary
-        self.secondary = secondary
+    init(limit: String, used: String, remainingPercent: Int, resetsAt: TimeInterval) throws {
+        guard let total = Double(limit),
+              let used = Double(used),
+              total.isFinite,
+              total > 0,
+              used.isFinite,
+              used >= 0,
+              used <= total,
+              (0...100).contains(remainingPercent),
+              resetsAt.isFinite,
+              resetsAt > 0
+        else {
+            throw UsageError.invalidRateLimit
+        }
+
+        self.total = total
+        self.used = used
+        self.remainingPercent = remainingPercent
+        self.resetsAt = resetsAt
+    }
+
+    var usedPercent: Double {
+        Double(100 - remainingPercent)
+    }
+
+    var resetDate: Date {
+        Date(timeIntervalSince1970: resetsAt)
+    }
+}
+
+enum UsageSnapshot: Equatable, Sendable {
+    case rateLimits(primary: RateLimitWindow, secondary: RateLimitWindow?)
+    case monthlyCredits(MonthlyCreditLimit)
+
+    var remainingPercent: Int {
+        switch self {
+        case let .rateLimits(primary, _):
+            primary.remainingPercent
+        case let .monthlyCredits(limit):
+            limit.remainingPercent
+        }
+    }
+
+    var usedPercent: Double {
+        switch self {
+        case let .rateLimits(primary, _):
+            primary.usedPercent
+        case let .monthlyCredits(limit):
+            limit.usedPercent
+        }
+    }
+
+    var resetDate: Date {
+        switch self {
+        case let .rateLimits(primary, _):
+            primary.resetDate
+        case let .monthlyCredits(limit):
+            limit.resetDate
+        }
     }
 }
 
@@ -88,11 +146,11 @@ enum UsageViewState: Equatable, Sendable {
     }
 
     var menuTitle: String {
-        snapshot.map { "\($0.primary.remainingPercent)%" } ?? "—"
+        snapshot.map { "\($0.remainingPercent)%" } ?? "—"
     }
 
     var petMood: PetMood {
-        snapshot.map { PetMood(usedPercent: $0.primary.usedPercent) } ?? .bright
+        snapshot.map { PetMood(usedPercent: $0.usedPercent) } ?? .bright
     }
 
     var errorMessage: String? {

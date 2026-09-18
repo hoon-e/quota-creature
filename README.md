@@ -1,17 +1,19 @@
 # QuotaCreature
 
-A tiny, local-only macOS menu-bar creature for the current Codex usage window.
-It shows remaining percentage and reset time; it does not invent a global
-“tokens remaining / total” number that Codex does not provide.
+A tiny, local-only macOS menu-bar creature for current Codex usage. It shows
+the rate-limit window for personal plans and the monthly credit limit exposed
+by Codex for Business and Enterprise workspaces.
 
 QuotaCreature is unofficial and is not affiliated with or endorsed by OpenAI.
 
 ## What it does
 
-- Refreshes the current Codex rate-limit window at launch and every minute.
+- Refreshes current Codex usage at launch and every minute.
 - Shows a pixel creature whose expression changes with usage.
 - Opens a small popover with remaining percentage, reset time, optional
-  secondary window, manual refresh, and quit.
+  secondary window or monthly credit usage, manual refresh, and quit.
+- Can send one opt-in local notification an hour before a monthly credit
+  reset.
 - Builds with SwiftUI/AppKit only—no package dependencies.
 
 ## Quick start
@@ -41,7 +43,9 @@ QuotaCreature starts a short-lived local `codex app-server --listen stdio://`
 child process. It sends only the App Server handshake and
 `account/rateLimits/read`; it never starts a Codex thread, runs a turn, reads
 your auth files, or opens a local network port. The companion has no direct
-network client, analytics, telemetry, persistence, or updater.
+network client, analytics, telemetry, or updater. It stores only the local
+notification preference and the reset timestamp it has already scheduled,
+never usage history or credentials.
 
 The App Server protocol documents `stdio` as its default transport and
 documents the rate-limit fields used here. See the official [Codex App Server

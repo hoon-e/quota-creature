@@ -4,8 +4,13 @@ QuotaCreature does not collect, persist, sell, sync, or transmit usage data
 itself.
 
 For each refresh it keeps these values in memory only: usage percentage,
-window length, reset timestamp, and an optional secondary window. Closing the
-app removes that in-memory state.
+window length, reset timestamp, an optional secondary window, or a monthly
+credit limit. Closing the app removes that in-memory state.
+
+If the user enables the monthly-reset reminder, the app stores only that
+preference and the reset timestamp already scheduled in macOS UserDefaults.
+This prevents duplicate local notifications. It does not store account IDs,
+credit amounts, token amounts, or usage history.
 
 The app starts the locally installed Codex App Server over standard input and
 output. That child uses the user's existing Codex login to obtain rate-limit

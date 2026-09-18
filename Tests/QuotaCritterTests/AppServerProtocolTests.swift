@@ -22,8 +22,28 @@ final class AppServerProtocolTests: XCTestCase {
 
         let snapshot = try XCTUnwrap(AppServerProtocol.parseRateLimitResponse(line))
 
-        XCTAssertEqual(snapshot.primary.remainingPercent, 75)
-        XCTAssertEqual(snapshot.secondary?.remainingPercent, 60)
+        guard case let .rateLimits(primary, secondary) = snapshot else {
+            return XCTFail("Expected rate-limit snapshot")
+        }
+
+        XCTAssertEqual(primary.remainingPercent, 75)
+        XCTAssertEqual(secondary?.remainingPercent, 60)
+    }
+
+    func testParserUsesBusinessIndividualLimitWhenRateWindowsAreMissing() throws {
+        let line = Data(
+            #"{"id":2,"result":{"rateLimits":{"primary":null,"secondary":null,"individualLimit":{"limit":"16000","used":"6238.36","remainingPercent":61,"resetsAt":1900000000}}}}"#.utf8
+        )
+
+        let snapshot = try XCTUnwrap(AppServerProtocol.parseRateLimitResponse(line))
+
+        guard case let .monthlyCredits(limit) = snapshot else {
+            return XCTFail("Expected monthly credit snapshot")
+        }
+
+        XCTAssertEqual(limit.total, 16_000)
+        XCTAssertEqual(limit.used, 6_238.36, accuracy: 0.001)
+        XCTAssertEqual(limit.remainingPercent, 61)
     }
 
     func testParserRejectsOutOfRangeUsageAndIgnoresWrongId() {

@@ -19,17 +19,32 @@ enum AppServerProtocol {
         guard envelope.id == rateLimitRequestID else {
             return nil
         }
-        guard let primary = envelope.result?.rateLimits?.primary else {
+        guard let rateLimits = envelope.result?.rateLimits else {
             throw UsageError.invalidRateLimit
         }
 
-        return try UsageSnapshot(
+        if let individualLimit = rateLimits.individualLimit {
+            return .monthlyCredits(
+                try MonthlyCreditLimit(
+                    limit: individualLimit.limit,
+                    used: individualLimit.used,
+                    remainingPercent: individualLimit.remainingPercent,
+                    resetsAt: individualLimit.resetsAt
+                )
+            )
+        }
+
+        guard let primary = rateLimits.primary else {
+            throw UsageError.invalidRateLimit
+        }
+
+        return try .rateLimits(
             primary: RateLimitWindow(
                 usedPercent: primary.usedPercent,
                 windowDurationMins: primary.windowDurationMins,
                 resetsAt: primary.resetsAt
             ),
-            secondary: try envelope.result?.rateLimits?.secondary.map {
+            secondary: try rateLimits.secondary.map {
                 try RateLimitWindow(
                     usedPercent: $0.usedPercent,
                     windowDurationMins: $0.windowDurationMins,
@@ -52,11 +67,19 @@ private struct RateLimitResult: Decodable {
 private struct RateLimits: Decodable {
     let primary: RateLimitPayload?
     let secondary: RateLimitPayload?
+    let individualLimit: IndividualLimitPayload?
 }
 
 private struct RateLimitPayload: Decodable {
     let usedPercent: Double
     let windowDurationMins: Int
+    let resetsAt: TimeInterval
+}
+
+private struct IndividualLimitPayload: Decodable {
+    let limit: String
+    let used: String
+    let remainingPercent: Int
     let resetsAt: TimeInterval
 }
 

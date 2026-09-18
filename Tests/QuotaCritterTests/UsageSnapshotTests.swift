@@ -27,13 +27,25 @@ final class UsageSnapshotTests: XCTestCase {
         )
     }
 
+    func testRejectsMonthlyCreditsPastTheirLimit() {
+        XCTAssertThrowsError(
+            try MonthlyCreditLimit(
+                limit: "16000",
+                used: "16001",
+                remainingPercent: 0,
+                resetsAt: 1_900_000_000
+            )
+        )
+    }
+
     func testUnavailableStateKeepsLastSnapshotAndHidesFailureDetails() throws {
-        let snapshot = UsageSnapshot(
+        let snapshot = UsageSnapshot.rateLimits(
             primary: try RateLimitWindow(
                 usedPercent: 50,
                 windowDurationMins: 15,
                 resetsAt: 1_900_000_000
-            )
+            ),
+            secondary: nil
         )
         let state = UsageViewState.unavailable(snapshot)
 

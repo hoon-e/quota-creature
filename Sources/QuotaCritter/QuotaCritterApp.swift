@@ -30,13 +30,16 @@ struct QuotaCreatureApp: App {
 final class UsageStore: ObservableObject {
     @Published private(set) var state: UsageViewState = .loading
     @Published private(set) var currentDate = Date()
+    @Published private(set) var monthlyResetReminderEnabled: Bool
 
     private let client = AppServerRateLimitClient()
+    private let resetNotifier = MonthlyResetNotifier()
     private var refreshID = 0
     private var refreshTimer: Timer?
     private var clockTimer: Timer?
 
     init() {
+        monthlyResetReminderEnabled = resetNotifier.isEnabled
         refresh()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -65,8 +68,24 @@ final class UsageStore: ObservableObject {
             switch result {
             case let .success(snapshot):
                 state = .ready(snapshot)
+                if case let .monthlyCredits(limit) = snapshot,
+                   monthlyResetReminderEnabled {
+                    await resetNotifier.schedule(for: limit)
+                }
             case .failure:
                 state = .unavailable(state.snapshot ?? previous)
+            }
+        }
+    }
+
+    func setMonthlyResetReminderEnabled(_ enabled: Bool) {
+        Task {
+            let isEnabled = await resetNotifier.setEnabled(enabled)
+            monthlyResetReminderEnabled = isEnabled
+
+            if isEnabled,
+               case let .monthlyCredits(limit) = state.snapshot {
+                await resetNotifier.schedule(for: limit)
             }
         }
     }

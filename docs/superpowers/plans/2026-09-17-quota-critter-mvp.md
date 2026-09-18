@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
-**Goal:** Build a local-only macOS menu-bar creature that reads a Codex rate-limit window every minute and can be installed as a local app bundle.
+**Goal:** Build a local-only macOS menu-bar creature that reads current Codex usage every minute and can be installed as a local app bundle.
 
-**Architecture:** One Swift Package supplies a SwiftUI MenuBarExtra, pure parser/value code, and a short-lived Process client for codex app-server --listen stdio://. The client writes three fixed JSONL messages and accepts only the matching rate-limit response.
+**Architecture:** One Swift Package supplies a SwiftUI MenuBarExtra, pure parser/value code, and a short-lived Process client for codex app-server --listen stdio://. The client writes three fixed JSONL messages and accepts only the matching usage response.
 
 **Tech Stack:** Swift 6.2, SwiftUI, AppKit, Foundation, XCTest, zsh; no package dependencies.
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Target macOS 14 or later; use only Apple frameworks already shipped with Xcode.
-- No URLSession, WebSocket, listener, telemetry, analytics, updater, Keychain, UserDefaults, or third-party package.
+- No URLSession, WebSocket, listener, telemetry, analytics, updater, Keychain, usage history, or third-party package. `UserDefaults` is limited to the opt-in monthly-reset reminder and its scheduled reset timestamp.
 - Never read, log, store, or display credentials, prompts, transcripts, account identity, or raw App Server errors.
 - Launch only an absolute verified codex executable from absolute PATH entries or fixed conventional local install locations, with constant arguments: app-server, --listen, stdio://.
 - Send only initialize, initialized, and account/rateLimits/read; reject malformed, oversized, wrong-id, or invalid data.

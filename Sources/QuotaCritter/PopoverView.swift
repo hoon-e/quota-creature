@@ -23,8 +23,25 @@ struct PopoverView: View {
                 Spacer()
             }
 
-            if let primary = store.state.snapshot?.primary {
-                RateLimitRow(title: "Primary window", window: primary, now: store.currentDate)
+            if let snapshot = store.state.snapshot {
+                switch snapshot {
+                case let .rateLimits(primary, secondary):
+                    RateLimitRow(title: "Primary window", window: primary, now: store.currentDate)
+
+                    if let secondary {
+                        RateLimitRow(title: "Secondary window", window: secondary, now: store.currentDate)
+                    }
+                case let .monthlyCredits(limit):
+                    MonthlyCreditLimitRow(limit: limit, now: store.currentDate)
+                    Toggle(
+                        "Notify 1 hour before reset",
+                        isOn: Binding(
+                            get: { store.monthlyResetReminderEnabled },
+                            set: { store.setMonthlyResetReminderEnabled($0) }
+                        )
+                    )
+                    .font(.subheadline)
+                }
             } else if store.state.showsLoadingIndicator {
                 HStack(spacing: 8) {
                     ProgressView()
@@ -40,10 +57,6 @@ struct PopoverView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                 }
-            }
-
-            if let secondary = store.state.snapshot?.secondary {
-                RateLimitRow(title: "Secondary window", window: secondary, now: store.currentDate)
             }
 
             if let error = store.state.errorMessage {
@@ -63,7 +76,7 @@ struct PopoverView: View {
                 }
             }
 
-            Text("Local only. No usage data is stored.")
+            Text("Local only. No usage history is stored.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
@@ -72,10 +85,10 @@ struct PopoverView: View {
     }
 
     private var primaryResetText: String {
-        guard let primary = store.state.snapshot?.primary else {
+        guard let snapshot = store.state.snapshot else {
             return "Waiting for Codex"
         }
-        return "Resets in \(remainingTime(until: primary.resetDate))"
+        return "Resets in \(remainingTime(until: snapshot.resetDate))"
     }
 }
 
@@ -93,6 +106,24 @@ private struct RateLimitRow: View {
                 .monospacedDigit()
         }
         .font(.subheadline)
+    }
+}
+
+private struct MonthlyCreditLimitRow: View {
+    let limit: MonthlyCreditLimit
+    let now: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Monthly credit limit")
+            Text(
+                "\(limit.used.formatted(.number.precision(.fractionLength(0)))) of \(limit.total.formatted(.number.precision(.fractionLength(0)))) credits used · \(limit.remainingPercent)% left · \(remainingTime(until: limit.resetDate, now: now))"
+            )
+            .foregroundStyle(.secondary)
+            .monospacedDigit()
+        }
+        .font(.subheadline)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

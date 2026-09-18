@@ -23,11 +23,16 @@ swift run QuotaCreature
 ```
 
 The first refresh may show a generic unavailable state until the Codex CLI is
-logged in and the App Server returns a rate-limit window. When the App Server
-returns no primary window, QuotaCreature shows `Usage unavailable` instead of
-a permanent spinner. Check `codex login status`, keep the CLI current, then
-use Refresh. The app intentionally does not fall back to scraping local Codex
+logged in and the App Server returns usage data. QuotaCreature supports both
+personal-plan rate-limit windows and Business/Enterprise monthly credit
+limits. When neither is available, it shows `Usage unavailable` instead of a
+permanent spinner. Check `codex login status`, keep the CLI current, then use
+Refresh. The app intentionally does not fall back to scraping local Codex
 files or terminal output.
+
+For a monthly credit limit, enable **Notify 1 hour before reset** in the
+popover if you want a local macOS reminder. The system asks for notification
+permission only when that toggle is enabled.
 
 ## Install a local app bundle
 
@@ -44,5 +49,9 @@ then run the script again.
 ## Remove
 
 Quit QuotaCreature and move `QuotaCreature.app` from your Applications folder
-to Trash. The app has no settings database, cache, or saved usage history to
-remove.
+to Trash. The app has no cache or saved usage history. To remove the optional
+notification preference too, run:
+
+```zsh
+defaults delete com.quotacreature.quotacreature
+```

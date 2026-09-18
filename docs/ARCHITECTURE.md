@@ -19,11 +19,17 @@ Each refresh creates one short-lived child process. The client sends exactly:
 2. `initialized`
 3. `account/rateLimits/read`
 
-It accepts only response id `2`, decodes only the primary and optional
-secondary `usedPercent`, `windowDurationMins`, and `resetsAt` values, then
-terminates the child. A local timer updates the reset countdown; it never
-polls the service more often than once per minute unless the user presses
-Refresh.
+It accepts only response id `2`. Personal-plan responses use the primary and
+optional secondary `usedPercent`, `windowDurationMins`, and `resetsAt` values.
+Business and Enterprise responses use `individualLimit` (`limit`, `used`,
+`remainingPercent`, and `resetsAt`) instead. A local timer updates the reset
+countdown; it never polls the service more often than once per minute unless
+the user presses Refresh.
+
+When the user enables the monthly-reset toggle, `UNUserNotificationCenter`
+schedules one local notification an hour before the current monthly reset.
+The only persisted values are the opt-in preference and the reset timestamp
+already scheduled, so minute-by-minute refreshes cannot duplicate it.
 
 The child gets a filtered environment containing only `HOME`, `PATH`,
 `TMPDIR`, and `LANG`. No credential-bearing environment variable is copied.

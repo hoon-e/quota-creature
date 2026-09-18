@@ -3,9 +3,9 @@
 ## Purpose
 
 QuotaCreature is an unofficial, local-only macOS menu-bar companion for
-Codex usage windows. It turns the current remaining percentage and reset
-time into a small pixel creature instead of pretending that Codex exposes a
-fixed, global token allowance.
+Codex usage. It turns the current remaining percentage and reset time into a
+small pixel creature instead of pretending that every account exposes a fixed,
+global token allowance.
 
 The MVP is intended for a developer to build and run on their own Mac. It is
 not a hosted service, browser extension, or remote-control client.
@@ -21,6 +21,8 @@ not a hosted service, browser extension, or remote-control client.
   no App Store release and no updater.
 - Usage source: a short-lived local `codex app-server --listen stdio://`
   child process, using JSONL over standard input/output only.
+- Usage shapes: personal-plan rate-limit windows, or Business/Enterprise
+  monthly credit limits when the response supplies `individualLimit`.
 - Refresh behavior: once immediately at launch, once every 60 seconds, and
   on an explicit Refresh button. The reset countdown ticks locally once per
   second without extra requests.
@@ -38,16 +40,19 @@ The MVP uses option 3.
 
 ## User experience
 
-The menu bar shows a monochrome pixel creature and the primary window’s
-remaining percentage, for example `▣ 68%`. Clicking it opens a compact
+The menu bar shows a monochrome pixel creature and the current remaining
+percentage, for example `▣ 68%`. Clicking it opens a compact
 popover:
 
 - A colored indigo, round, antennaed pixel creature with mint eyes and chest
   light.
 - Large remaining percentage, followed by “resets in …”.
-- Optional secondary-window row only when the App Server supplies one.
+- Optional secondary-window row, or monthly credit usage when the App Server
+  supplies an individual credit limit.
+- An opt-in monthly-reset notification toggle, shown only for monthly credit
+  limits.
 - A Refresh button and a Quit button.
-- A quiet footer: “Local only. No usage data is stored.”
+- A quiet footer: “Local only. No usage history is stored.”
 
 The creature is generated as original pixel geometry in source code, not
 loaded from an external asset. Its expression changes only after an accepted
@@ -74,7 +79,7 @@ short-lived local Process: codex app-server --listen stdio://
       │ JSONL, fixed read-only messages only
       ▼
 Codex App Server using the existing Codex CLI login
-      │ rate-limit response
+      │ usage response
       ▼
 validated UsageSnapshot → remaining percentage / reset date / pet state
 ```
@@ -85,10 +90,12 @@ The client sends exactly these messages, in this order:
 2. `initialized` notification.
 3. `account/rateLimits/read` with a fixed request id.
 
-It accepts only the matching response’s `rateLimits.primary` and optional
-`rateLimits.secondary` values: `usedPercent`, `windowDurationMins`, and
-`resetsAt`. It ignores account identity, plan, reset credits, workspace
-messages, and every unrelated notification.
+It accepts only the matching response. For personal plans it reads
+`rateLimits.primary` and optional `rateLimits.secondary`: `usedPercent`,
+`windowDurationMins`, and `resetsAt`. For Business and Enterprise responses it
+reads `individualLimit`: `limit`, `used`, `remainingPercent`, and `resetsAt`.
+It ignores account identity, plan, workspace messages, and every unrelated
+notification.
 
 `remainingPercent = 100 - usedPercent`. If a response is malformed, out of
 range, too large, or late, the last valid value stays visible and the popover
@@ -98,7 +105,9 @@ or account data appears in the UI or logs.
 The App Server documents `usedPercent`, `windowDurationMins`, and `resetsAt`
 for ChatGPT rate-limit windows. Its token-usage endpoint provides historical
 summaries and daily buckets, not a remaining quota denominator, so the MVP
-does not display invented “remaining tokens / total tokens.”
+does not display invented “remaining tokens / total tokens.” Monthly credit
+amounts are displayed only when the local App Server response explicitly
+provides them.
 
 ## Security and privacy contract
 
@@ -133,8 +142,9 @@ The code must not:
 - Cap buffered stdout at 64 KiB; decode newline-delimited UTF-8 JSON only;
   reject unexpected response ids, missing fields, non-finite values, used
   percentages outside 0...100, and invalid reset timestamps.
-- Keep in-memory usage state only. Nothing is written to `UserDefaults`, a
-  file, Keychain, or a network endpoint.
+- Keep usage state in memory. If the user enables a monthly-reset reminder,
+  persist only that opt-in preference and the scheduled reset timestamp in
+  `UserDefaults`; never persist usage history, account identity, or credits.
 - Ship no app sandbox entitlement claim. A sandboxed App Store build cannot
   reliably launch the user’s external Codex CLI; the local source-built MVP
   makes this limitation explicit.
@@ -151,10 +161,12 @@ Sources/QuotaCritter/
   QuotaCritterApp.swift          app lifecycle and status-item wiring
   UsageSnapshot.swift            validated value types and pet-state mapping
   AppServerRateLimitClient.swift fixed JSONL request, parser, timeout, process
+  MonthlyResetReminder.swift      opt-in local notification scheduling
   PopoverView.swift              compact SwiftUI presentation and pixel creature
 Tests/QuotaCritterTests/
   UsageSnapshotTests.swift       pure validation and pet-state behavior
   AppServerProtocolTests.swift   fixed request and response-parser behavior
+  MonthlyResetReminderTests.swift reset-notification timing behavior
 Scripts/install.sh               safe, non-overwriting local .app installer
 README.md
 docs/INSTALL.md
@@ -175,9 +187,11 @@ already exist; upgrades remain an explicit user action.
 Automated tests use hand-written, sanitized JSON fixtures. They cover:
 
 - valid primary and secondary rate-limit responses;
+- valid Business/Enterprise individual credit-limit responses;
 - malformed, oversized, out-of-range, and wrong-id responses;
 - the exact fixed outbound App Server message set;
 - remaining-percentage calculation and all five pet-state boundaries.
+- one-hour reset-notification timing, including post-reset rejection.
 
 The local smoke test is `swift test`, then `swift run QuotaCreature` with an
 already logged-in Codex CLI. The manual acceptance check confirms that a menu
@@ -187,5 +201,6 @@ details, and no local network listener is opened by the app.
 ## MVP boundary
 
 Deferred from this release: multiple accounts, arbitrary polling intervals,
-settings UI, persistent history, notifications, a desktop pet, export,
-auto-update, remote synchronization, and a signed public release channel.
+settings UI, persistent history, advanced notification scheduling, a desktop
+pet, export, auto-update, remote synchronization, and a signed public release
+channel.
