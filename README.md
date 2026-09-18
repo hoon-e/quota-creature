@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Assets/AppIcon.png" alt="QuotaCreature logo" width="220">
+</p>
+
 # QuotaCreature
 
 A tiny, local-only macOS menu-bar creature for current Codex usage. It shows
@@ -25,19 +29,6 @@ Codex usage is the supported reader. Claude Code support is in Beta: the app
 can detect a local CLI, but its usage reader is still being tested. The Claude
 selection does not invoke Claude, read Claude credentials or local files, or
 parse terminal output.
-
-## Download the beta
-
-The `v0.0.2-beta` DMG supports Apple silicon Macs running macOS 14 or
-later. A logged-in Codex CLI is still required for usage data.
-
-[Download QuotaCreature v0.0.2-beta](https://github.com/hoon-e/quota-creature/releases/download/v0.0.2-beta/QuotaCreature-v0.0.2-beta.dmg)
-· [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v0.0.2-beta/QuotaCreature-v0.0.2-beta.dmg.sha256)
-
-Open the DMG and drag QuotaCreature into Applications. This beta is ad-hoc
-signed but not Apple-notarized, so macOS may require Control-clicking the app
-and choosing Open on first launch. Do not disable Gatekeeper or clear the
-quarantine attribute; if the checksum does not match, delete the download.
 
 ## Build from source
 
