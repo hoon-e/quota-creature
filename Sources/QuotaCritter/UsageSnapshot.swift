@@ -106,6 +106,62 @@ enum UsageSnapshot: Equatable, Sendable {
     }
 }
 
+enum UsageActivity: String, Equatable, Sendable {
+    case idle
+    case active
+    case busy
+}
+
+enum UsageProvider: String, CaseIterable, Hashable, Sendable {
+    case codex
+    case claude
+}
+
+struct UsageActivityTracker {
+    private var previous: Sample?
+
+    mutating func record(_ snapshot: UsageSnapshot, at now: Date) -> UsageActivity {
+        let current = Sample(
+            usedPercent: snapshot.usedPercent,
+            resetsAt: snapshot.resetDate.timeIntervalSince1970,
+            sampledAt: now
+        )
+        defer { previous = current }
+
+        guard let previous,
+              previous.resetsAt == current.resetsAt
+        else {
+            return .idle
+        }
+
+        let elapsed = now.timeIntervalSince(previous.sampledAt)
+        let change = current.usedPercent - previous.usedPercent
+        guard elapsed > 0, change > 0 else {
+            return .idle
+        }
+
+        let percentagePointsPerMinute = change / elapsed * 60
+        guard percentagePointsPerMinute.isFinite else {
+            return .idle
+        }
+
+        return switch percentagePointsPerMinute {
+        case ..<0.01:
+            .idle
+        case ..<1:
+            .active
+        default:
+            .busy
+        }
+    }
+
+    private struct Sample {
+        let usedPercent: Double
+        let resetsAt: TimeInterval
+        let sampledAt: Date
+    }
+}
+
 enum PetMood: String, CaseIterable, Equatable, Sendable {
     case bright
     case active
@@ -149,8 +205,16 @@ enum UsageViewState: Equatable, Sendable {
         snapshot.map { "\($0.remainingPercent)%" } ?? "—"
     }
 
+    func menuTitle(for provider: UsageProvider) -> String {
+        provider == .codex ? menuTitle : "β"
+    }
+
     var petMood: PetMood {
         snapshot.map { PetMood(usedPercent: $0.usedPercent) } ?? .bright
+    }
+
+    func petMood(for provider: UsageProvider) -> PetMood {
+        provider == .codex ? petMood : .bright
     }
 
     var errorMessage: String? {

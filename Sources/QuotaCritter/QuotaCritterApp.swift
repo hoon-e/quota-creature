@@ -5,6 +5,7 @@ import SwiftUI
 @main
 struct QuotaCreatureApp: App {
     @StateObject private var store = UsageStore()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init() {
         NSApplication.shared.setActivationPolicy(.accessory)
@@ -15,12 +16,21 @@ struct QuotaCreatureApp: App {
             PopoverView(store: store)
         } label: {
             HStack(spacing: 3) {
-                Image(nsImage: PixelCreature.menuBarImage(for: store.state.petMood))
+                Image(
+                    nsImage: PixelCreature.menuBarImage(
+                        for: store.displayedMood,
+                        activity: store.displayedActivity,
+                        now: store.currentDate,
+                        reduceMotion: reduceMotion
+                    )
+                )
                     .renderingMode(.template)
-                Text(store.state.menuTitle)
+                Text(store.displayedMenuTitle)
                     .monospacedDigit()
             }
-            .accessibilityLabel("QuotaCreature \(store.state.menuTitle)")
+            .accessibilityLabel(
+                "QuotaCreature \(store.displayedMenuTitle), \(store.displayedActivity.rawValue)"
+            )
         }
         .menuBarExtraStyle(.window)
     }
@@ -30,10 +40,14 @@ struct QuotaCreatureApp: App {
 final class UsageStore: ObservableObject {
     @Published private(set) var state: UsageViewState = .loading
     @Published private(set) var currentDate = Date()
+    @Published private(set) var activity: UsageActivity = .idle
+    @Published private(set) var selectedProvider: UsageProvider = .codex
     @Published private(set) var monthlyResetReminderEnabled: Bool
 
     private let client = AppServerRateLimitClient()
     private let resetNotifier = MonthlyResetNotifier()
+    let claudeIsInstalled = ClaudeExecutable.isInstalled()
+    private var activityTracker = UsageActivityTracker()
     private var refreshID = 0
     private var refreshTimer: Timer?
     private var clockTimer: Timer?
@@ -53,6 +67,22 @@ final class UsageStore: ObservableObject {
         }
     }
 
+    var displayedMenuTitle: String {
+        state.menuTitle(for: selectedProvider)
+    }
+
+    var displayedMood: PetMood {
+        state.petMood(for: selectedProvider)
+    }
+
+    var displayedActivity: UsageActivity {
+        selectedProvider == .codex ? activity : .idle
+    }
+
+    func selectProvider(_ provider: UsageProvider) {
+        selectedProvider = provider
+    }
+
     func refresh() {
         refreshID += 1
         let requestID = refreshID
@@ -67,6 +97,7 @@ final class UsageStore: ObservableObject {
 
             switch result {
             case let .success(snapshot):
+                activity = activityTracker.record(snapshot, at: currentDate)
                 state = .ready(snapshot)
                 if case let .monthlyCredits(limit) = snapshot,
                    monthlyResetReminderEnabled {

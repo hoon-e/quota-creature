@@ -90,4 +90,21 @@ final class AppServerProtocolTests: XCTestCase {
             )
         )
     }
+
+    func testClaudeCandidatePathsIncludeKnownNvmInstallation() {
+        let candidates = ClaudeExecutable.candidatePaths(
+            path: "/usr/bin:/usr/local/bin",
+            home: URL(fileURLWithPath: "/Users/me"),
+            nvmVersions: ["v22.18.0"]
+        )
+
+        XCTAssertTrue(
+            candidates.contains(
+                URL(fileURLWithPath: "/Users/me/.nvm/versions/node/v22.18.0/bin/claude")
+            )
+        )
+        XCTAssertTrue(
+            candidates.contains(URL(fileURLWithPath: "/opt/homebrew/bin/claude"))
+        )
+    }
 }

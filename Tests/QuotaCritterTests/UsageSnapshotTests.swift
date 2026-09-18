@@ -58,4 +58,84 @@ final class UsageSnapshotTests: XCTestCase {
         XCTAssertTrue(UsageViewState.loading.showsLoadingIndicator)
         XCTAssertFalse(UsageViewState.unavailable(nil).showsLoadingIndicator)
     }
+
+    func testActivityStartsIdleThenBecomesActiveForSlowPositiveChange() throws {
+        var tracker = UsageActivityTracker()
+        let before = try rateLimitSnapshot(usedPercent: 10, resetsAt: 1_900_000_000)
+        let after = try rateLimitSnapshot(usedPercent: 10.5, resetsAt: 1_900_000_000)
+
+        XCTAssertEqual(
+            tracker.record(before, at: Date(timeIntervalSince1970: 0)),
+            .idle
+        )
+        XCTAssertEqual(
+            tracker.record(after, at: Date(timeIntervalSince1970: 60)),
+            .active
+        )
+    }
+
+    func testActivityBecomesBusyForFastPositiveChange() throws {
+        var tracker = UsageActivityTracker()
+        let before = try rateLimitSnapshot(usedPercent: 10, resetsAt: 1_900_000_000)
+        let after = try rateLimitSnapshot(usedPercent: 11.5, resetsAt: 1_900_000_000)
+
+        _ = tracker.record(before, at: Date(timeIntervalSince1970: 0))
+
+        XCTAssertEqual(
+            tracker.record(after, at: Date(timeIntervalSince1970: 60)),
+            .busy
+        )
+    }
+
+    func testActivityReturnsIdleWhenUsageDropsOrResetWindowChanges() throws {
+        var tracker = UsageActivityTracker()
+        let first = try rateLimitSnapshot(usedPercent: 20, resetsAt: 1_900_000_000)
+        let lower = try rateLimitSnapshot(usedPercent: 10, resetsAt: 1_900_000_000)
+        let nextWindow = try rateLimitSnapshot(usedPercent: 11, resetsAt: 1_900_100_000)
+
+        _ = tracker.record(first, at: Date(timeIntervalSince1970: 0))
+        XCTAssertEqual(
+            tracker.record(lower, at: Date(timeIntervalSince1970: 60)),
+            .idle
+        )
+        XCTAssertEqual(
+            tracker.record(nextWindow, at: Date(timeIntervalSince1970: 120)),
+            .idle
+        )
+    }
+
+    func testCreaturePhaseUsesActivityCadence() {
+        XCTAssertEqual(PixelCreature.phase(for: .idle, at: 0, reduceMotion: false), 0)
+        XCTAssertEqual(PixelCreature.phase(for: .idle, at: 4, reduceMotion: false), 1)
+        XCTAssertEqual(PixelCreature.phase(for: .active, at: 2, reduceMotion: false), 1)
+        XCTAssertEqual(PixelCreature.phase(for: .busy, at: 1, reduceMotion: false), 1)
+    }
+
+    func testCreaturePhaseUsesRestingFrameForReducedMotion() {
+        XCTAssertEqual(PixelCreature.phase(for: .busy, at: 99, reduceMotion: true), 0)
+    }
+
+    func testClaudePresentationDoesNotReuseCodexQuota() throws {
+        let state = UsageViewState.ready(
+            try rateLimitSnapshot(usedPercent: 50, resetsAt: 1_900_000_000)
+        )
+
+        XCTAssertEqual(state.menuTitle(for: .codex), "50%")
+        XCTAssertEqual(state.menuTitle(for: .claude), "β")
+        XCTAssertEqual(state.petMood(for: .claude), .bright)
+    }
+
+    private func rateLimitSnapshot(
+        usedPercent: Double,
+        resetsAt: TimeInterval
+    ) throws -> UsageSnapshot {
+        .rateLimits(
+            primary: try RateLimitWindow(
+                usedPercent: usedPercent,
+                windowDurationMins: 15,
+                resetsAt: resetsAt
+            ),
+            secondary: nil
+        )
+    }
 }

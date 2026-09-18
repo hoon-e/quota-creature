@@ -83,6 +83,51 @@ private struct IndividualLimitPayload: Decodable {
     let resetsAt: TimeInterval
 }
 
+private enum LocalExecutable {
+    static func candidatePaths(
+        named executable: String,
+        path: String?,
+        home: URL,
+        nvmVersions: [String]
+    ) -> [URL] {
+        let pathCandidates = (path ?? "").split(separator: ":").compactMap { entry -> URL? in
+            guard entry.hasPrefix("/") else {
+                return nil
+            }
+            return URL(fileURLWithPath: String(entry))
+                .appendingPathComponent(executable)
+                .standardizedFileURL
+        }
+        let knownCandidates = [
+            home.appendingPathComponent(".local/bin/\(executable)"),
+            URL(fileURLWithPath: "/opt/homebrew/bin/\(executable)"),
+            URL(fileURLWithPath: "/usr/local/bin/\(executable)")
+        ]
+        let nvmCandidates = nvmVersions.map {
+            home.appendingPathComponent(".nvm/versions/node/\($0)/bin/\(executable)")
+        }
+
+        return (pathCandidates + knownCandidates + nvmCandidates).reduce(into: []) { paths, candidate in
+            if !paths.contains(candidate) {
+                paths.append(candidate)
+            }
+        }
+    }
+
+    static func nvmVersions(in home: URL) -> [String] {
+        let nodeRoot = home.appendingPathComponent(".nvm/versions/node")
+        return (try? FileManager.default.contentsOfDirectory(
+            at: nodeRoot,
+            includingPropertiesForKeys: [.isDirectoryKey]
+        ))?.compactMap { url in
+            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else {
+                return nil
+            }
+            return url.lastPathComponent
+        } ?? []
+    }
+}
+
 enum CodexExecutable {
     private static let allowedEnvironmentKeys = ["HOME", "PATH", "TMPDIR", "LANG"]
 
@@ -120,28 +165,12 @@ enum CodexExecutable {
     }
 
     static func candidatePaths(path: String?, home: URL, nvmVersions: [String]) -> [URL] {
-        let pathCandidates = (path ?? "").split(separator: ":").compactMap { entry -> URL? in
-            guard entry.hasPrefix("/") else {
-                return nil
-            }
-            return URL(fileURLWithPath: String(entry))
-                .appendingPathComponent("codex")
-                .standardizedFileURL
-        }
-        let knownCandidates = [
-            home.appendingPathComponent(".local/bin/codex"),
-            URL(fileURLWithPath: "/opt/homebrew/bin/codex"),
-            URL(fileURLWithPath: "/usr/local/bin/codex")
-        ]
-        let nvmCandidates = nvmVersions.map {
-            home.appendingPathComponent(".nvm/versions/node/\($0)/bin/codex")
-        }
-
-        return (pathCandidates + knownCandidates + nvmCandidates).reduce(into: []) { paths, candidate in
-            if !paths.contains(candidate) {
-                paths.append(candidate)
-            }
-        }
+        LocalExecutable.candidatePaths(
+            named: "codex",
+            path: path,
+            home: home,
+            nvmVersions: nvmVersions
+        )
     }
 
     private static func environmentValue(for key: String) -> String? {
@@ -154,16 +183,34 @@ enum CodexExecutable {
     }
 
     private static func nvmVersions(in home: URL) -> [String] {
-        let nodeRoot = home.appendingPathComponent(".nvm/versions/node")
-        return (try? FileManager.default.contentsOfDirectory(
-            at: nodeRoot,
-            includingPropertiesForKeys: [.isDirectoryKey]
-        ))?.compactMap { url in
-            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else {
-                return nil
-            }
-            return url.lastPathComponent
-        } ?? []
+        LocalExecutable.nvmVersions(in: home)
+    }
+}
+
+enum ClaudeExecutable {
+    static func candidatePaths(path: String?, home: URL, nvmVersions: [String]) -> [URL] {
+        LocalExecutable.candidatePaths(
+            named: "claude",
+            path: path,
+            home: home,
+            nvmVersions: nvmVersions
+        )
+    }
+
+    static func isInstalled() -> Bool {
+        let homePath = NSHomeDirectory()
+        guard homePath.hasPrefix("/") else {
+            return false
+        }
+
+        let home = URL(fileURLWithPath: homePath)
+        return candidatePaths(
+            path: ProcessInfo.processInfo.environment["PATH"],
+            home: home,
+            nvmVersions: LocalExecutable.nvmVersions(in: home)
+        ).contains {
+            FileManager.default.isExecutableFile(atPath: $0.path)
+        }
     }
 }
 
