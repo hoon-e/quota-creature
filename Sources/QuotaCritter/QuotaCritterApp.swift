@@ -18,7 +18,8 @@ struct QuotaCreatureApp: App {
             HStack(spacing: 3) {
                 Image(
                     nsImage: PixelCreature.menuBarImage(
-                        for: store.displayedMood,
+                        for: store.selectedCreature,
+                        mood: store.displayedMood,
                         activity: store.displayedActivity,
                         now: store.animationDate,
                         reduceMotion: reduceMotion
@@ -43,6 +44,7 @@ final class UsageStore: ObservableObject {
     @Published private(set) var animationDate = Date()
     @Published private(set) var activity: UsageActivity = .idle
     @Published private(set) var selectedProvider: UsageProvider = .codex
+    @Published private(set) var selectedCreature: CreatureStyle
     @Published private(set) var monthlyResetReminderEnabled: Bool
 
     private let client = AppServerRateLimitClient()
@@ -55,6 +57,7 @@ final class UsageStore: ObservableObject {
     private var animationTimer: Timer?
 
     init() {
+        selectedCreature = CreatureStyle.load()
         monthlyResetReminderEnabled = resetNotifier.isEnabled
         refresh()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
@@ -88,6 +91,12 @@ final class UsageStore: ObservableObject {
 
     func selectProvider(_ provider: UsageProvider) {
         selectedProvider = provider
+    }
+
+    func selectCreature(id: String) {
+        let style = CreatureStyle.resolve(id: id)
+        selectedCreature = style
+        style.save()
     }
 
     func refresh() {

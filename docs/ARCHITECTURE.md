@@ -38,12 +38,15 @@ Business and Enterprise responses use `individualLimit` (`limit`, `used`,
 countdown; it never polls the service more often than once per minute unless
 the user presses Refresh.
 
-SwiftUI TimelineView redraws one of three source-drawn creature frames at a
-native scheduled cadence. Each accepted reading replaces one prior in-memory
-percentage, reset timestamp, and sample time. A positive percentage-point
-change per minute selects idle, active, or busy motion; a lower value, a reset
-window change, or a negative change returns the creature to idle. The app does
-not infer tokens per minute.
+One source catalog defines Blob, Sprout, and Bunny as three 16-by-16 frames.
+The selected creature ID is stored in `UserDefaults` and controls both the
+menu-bar icon and popover; an unknown ID falls back to Blob. A 0.25-second
+timer publishes only when the visible animation frame changes, and menu-bar
+images are rendered once and reused. Each accepted reading replaces one prior
+in-memory percentage, reset timestamp, and sample time. A positive
+percentage-point change per minute selects idle, active, or busy motion; a
+lower value, a reset window change, or a negative change returns the creature
+to idle. The app does not infer tokens per minute.
 
 When the user enables the monthly-reset toggle, `UNUserNotificationCenter`
 schedules one local notification a week before the current monthly reset.

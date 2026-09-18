@@ -116,37 +116,98 @@ final class UsageSnapshotTests: XCTestCase {
     }
 
     func testLeapFrameSpreadsItsFeetBeyondRestingFrame() {
-        let restingSpan = bodySpan(in: PixelCreature.frames[0], rows: 11...13)
-        let leapSpan = bodySpan(in: PixelCreature.frames[2], rows: 11...13)
+        let frames = CreatureStyle.resolve(id: "blob").frames
+        let restingSpan = bodySpan(in: frames[0], rows: 11...13)
+        let leapSpan = bodySpan(in: frames[2], rows: 11...13)
 
         XCTAssertGreaterThan(leapSpan, restingSpan)
     }
 
     func testCreatureFramesFitThe16By16Canvas() {
+        XCTAssertFalse(CreatureStyle.all.isEmpty)
+
+        for style in CreatureStyle.all {
+            XCTAssertEqual(style.frames.count, 3, style.id)
+            XCTAssertTrue(
+                style.frames.allSatisfy { frame in
+                    frame.count == 16
+                        && frame.allSatisfy { row in
+                            row.count == 16 && row.allSatisfy { $0 == "." || $0 == "B" }
+                        }
+                },
+                style.id
+            )
+        }
+    }
+
+    func testCreatureCatalogHasUniqueNonemptyMetadata() {
+        let ids = CreatureStyle.all.map(\.id)
+
+        XCTAssertEqual(Set(ids).count, ids.count)
         XCTAssertTrue(
-            PixelCreature.frames.allSatisfy { frame in
-                frame.count == 16 && frame.allSatisfy { $0.count == 16 }
+            CreatureStyle.all.allSatisfy {
+                !$0.id.isEmpty && !$0.displayName.isEmpty
             }
         )
+    }
+
+    func testUnknownCreatureSelectionFallsBackToBlob() {
+        XCTAssertEqual(CreatureStyle.resolve(id: nil).id, "blob")
+        XCTAssertEqual(CreatureStyle.resolve(id: "missing").id, "blob")
+    }
+
+    func testCreatureSelectionPersistsInUserDefaults() throws {
+        let suiteName = "QuotaCreatureTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        CreatureStyle.resolve(id: "bunny").save(to: defaults)
+
+        XCTAssertEqual(CreatureStyle.load(from: defaults).id, "bunny")
     }
 
     @MainActor
     func testMenuBarImageReusesPreRenderedFrame() {
         let date = Date(timeIntervalSinceReferenceDate: 0)
         let first = PixelCreature.menuBarImage(
-            for: .bright,
+            for: CreatureStyle.resolve(id: "blob"),
+            mood: .bright,
             activity: .idle,
             now: date,
             reduceMotion: false
         )
         let second = PixelCreature.menuBarImage(
-            for: .bright,
+            for: CreatureStyle.resolve(id: "blob"),
+            mood: .bright,
             activity: .idle,
             now: date,
             reduceMotion: false
         )
 
         XCTAssertTrue(first === second)
+    }
+
+    @MainActor
+    func testCreatureSelectionChangesMenuBarPixels() {
+        let date = Date(timeIntervalSinceReferenceDate: 0)
+        let blob = PixelCreature.menuBarImage(
+            for: CreatureStyle.resolve(id: "blob"),
+            mood: .bright,
+            activity: .idle,
+            now: date,
+            reduceMotion: false
+        )
+        let sprout = PixelCreature.menuBarImage(
+            for: CreatureStyle.resolve(id: "sprout"),
+            mood: .bright,
+            activity: .idle,
+            now: date,
+            reduceMotion: false
+        )
+
+        XCTAssertNotEqual(blob.tiffRepresentation, sprout.tiffRepresentation)
     }
 
     func testClaudePresentationDoesNotReuseCodexQuota() throws {

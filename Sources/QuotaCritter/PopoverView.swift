@@ -18,8 +18,22 @@ struct PopoverView: View {
             }
             .pickerStyle(.segmented)
 
+            Picker(
+                "Creature",
+                selection: Binding(
+                    get: { store.selectedCreature.id },
+                    set: { store.selectCreature(id: $0) }
+                )
+            ) {
+                ForEach(CreatureStyle.all) { style in
+                    Text(style.displayName).tag(style.id)
+                }
+            }
+            .pickerStyle(.segmented)
+
             HStack(spacing: 14) {
                 PixelCreatureView(
+                    style: store.selectedCreature,
                     mood: store.displayedMood,
                     activity: store.displayedActivity,
                     now: store.animationDate
@@ -193,6 +207,7 @@ private func remainingTime(until date: Date, now: Date = Date()) -> String {
 }
 
 private struct PixelCreatureView: View {
+    let style: CreatureStyle
     let mood: PetMood
     let activity: UsageActivity
     let now: Date
@@ -210,7 +225,7 @@ private struct PixelCreatureView: View {
             let xOffset = (size.width - (16 * unit)) / 2
             let yOffset = (size.height - (16 * unit)) / 2
 
-            for pixel in PixelCreature.pixels(for: mood, phase: phase) {
+            for pixel in PixelCreature.pixels(for: style, mood: mood, phase: phase) {
                 let rect = CGRect(
                     x: xOffset + CGFloat(pixel.x) * unit,
                     y: yOffset + CGFloat(pixel.y) * unit,
@@ -220,7 +235,9 @@ private struct PixelCreatureView: View {
                 context.fill(Path(rect), with: .color(PixelCreature.color(for: pixel.tone)))
             }
         }
-        .accessibilityLabel("\(mood.rawValue), \(activity.rawValue) QuotaCreature")
+        .accessibilityLabel(
+            "\(style.displayName), \(mood.rawValue), \(activity.rawValue) QuotaCreature"
+        )
     }
 }
 
@@ -238,63 +255,6 @@ fileprivate struct Pixel {
 }
 
 enum PixelCreature {
-    static let frames = [
-        [
-            "................",
-            "......B..B......",
-            ".....BBBBBB.....",
-            "....BBBBBBBB....",
-            "...BBBBBBBBBB...",
-            "...BBBBBBBBBB...",
-            "..BBBBBBBBBBBB..",
-            "..BBBBBBBBBBBB..",
-            "..BBBBBBBBBBBB..",
-            "..BBBBBBBBBBBB..",
-            "...BBBBBBBBBB...",
-            "....BBBBBBBB....",
-            ".....BB..BB.....",
-            "......B..B......",
-            "................",
-            "................"
-        ],
-        [
-            "................",
-            "................",
-            "....BB....BB....",
-            "...BBBBBBBBBB...",
-            "..BBBBBBBBBBBB..",
-            ".BBBBBBBBBBBBBB.",
-            ".BBBBBBBBBBBBBB.",
-            ".BBBBBBBBBBBBBB.",
-            ".BBBBBBBBBBBBBB.",
-            "..BBBBBBBBBBBB..",
-            "...BBBBBBBBBB...",
-            "..BBBB..BBBB....",
-            "...BB....BB.....",
-            "................",
-            "................",
-            "................"
-        ],
-        [
-            "...B........B...",
-            "..BB......BB....",
-            "....BB....BB....",
-            "...BBBBBBBBBB...",
-            "..BBBBBBBBBBBB..",
-            ".BBBBBBBBBBBBBB.",
-            ".BBBBBBBBBBBBBB.",
-            ".BBBBBBBBBBBBBB.",
-            "..BBBBBBBBBBBB..",
-            "...BBBBBBBBBB...",
-            "..BB..BBBB..BB..",
-            ".BB....BB....BB.",
-            "B......BB......B",
-            "................",
-            "................",
-            "................"
-        ]
-    ]
-
     static func phase(
         for activity: UsageActivity,
         at seconds: TimeInterval,
@@ -312,11 +272,15 @@ enum PixelCreature {
         case .busy:
             0.25
         }
-        return max(0, Int(seconds / cadence)) % frames.count
+        return max(0, Int(seconds / cadence)) % CreatureStyle.frameCount
     }
 
-    fileprivate static func pixels(for mood: PetMood, phase: Int) -> [Pixel] {
-        let frame = frames[phase % frames.count]
+    fileprivate static func pixels(
+        for style: CreatureStyle,
+        mood: PetMood,
+        phase: Int
+    ) -> [Pixel] {
+        let frame = style.frames[phase % style.frames.count]
         let yOffset = phase == 1 ? 1 : 0
         var pixels = frame.enumerated().flatMap { y, row in
             row.enumerated().compactMap { x, symbol in
@@ -393,34 +357,44 @@ enum PixelCreature {
 
     @MainActor
     static func menuBarImage(
-        for mood: PetMood,
+        for style: CreatureStyle,
+        mood: PetMood,
         activity: UsageActivity,
         now: Date,
         reduceMotion: Bool
     ) -> NSImage {
+        let styleIndex = CreatureStyle.all.firstIndex { $0.id == style.id } ?? 0
         let moodIndex = PetMood.allCases.firstIndex(of: mood)!
         let phase = phase(
             for: activity,
             at: now.timeIntervalSinceReferenceDate,
             reduceMotion: reduceMotion
         )
-        return menuBarImages[moodIndex][phase]
+        return menuBarImages[styleIndex][moodIndex][phase]
     }
 
     @MainActor
-    private static let menuBarImages = PetMood.allCases.map { mood in
-        frames.indices.map { makeMenuBarImage(for: mood, phase: $0) }
+    private static let menuBarImages = CreatureStyle.all.map { style in
+        PetMood.allCases.map { mood in
+            style.frames.indices.map {
+                makeMenuBarImage(for: style, mood: mood, phase: $0)
+            }
+        }
     }
 
     @MainActor
-    private static func makeMenuBarImage(for mood: PetMood, phase: Int) -> NSImage {
+    private static func makeMenuBarImage(
+        for style: CreatureStyle,
+        mood: PetMood,
+        phase: Int
+    ) -> NSImage {
         let size = NSSize(width: 18, height: 18)
         let image = NSImage(size: size)
         let unit = size.width / 16
 
         image.lockFocus()
         NSColor.labelColor.setFill()
-        for pixel in pixels(for: mood, phase: phase) {
+        for pixel in pixels(for: style, mood: mood, phase: phase) {
             NSBezierPath(
                 rect: NSRect(
                     x: CGFloat(pixel.x) * unit,

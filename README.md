@@ -9,8 +9,9 @@ QuotaCreature is unofficial and is not affiliated with or endorsed by OpenAI.
 ## What it does
 
 - Refreshes current Codex usage at launch and every minute.
-- Shows a three-frame pixel creature whose expression changes with usage and
-  whose motion speeds up when recent usage rises faster.
+- Lets you choose Blob, Sprout, or Bunny for both the menu bar and popover.
+  Its expression changes with usage, and its motion speeds up when recent
+  usage rises faster.
 - Opens a small popover with remaining percentage, reset time, optional
   secondary window or monthly credit usage, manual refresh, and quit.
 - Can send one opt-in local notification a week before a monthly credit
@@ -52,8 +53,8 @@ child process. It sends only the App Server handshake and
 `account/rateLimits/read`; it never starts a Codex thread, runs a turn, reads
 your auth files, or opens a local network port. The companion has no direct
 network client, analytics, telemetry, or updater. It stores only the local
-notification preference and the reset timestamp it has already scheduled,
-never usage history or credentials.
+notification preference, the reset timestamp it has already scheduled, and
+the selected creature ID, never usage history or credentials.
 
 The App Server protocol documents `stdio` as its default transport and
 documents the rate-limit fields used here. See the official [Codex App Server
