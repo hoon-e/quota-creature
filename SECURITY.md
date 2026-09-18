@@ -31,4 +31,5 @@ Tagged beta DMGs are built on a GitHub-hosted macOS runner. The workflow pins
 the official checkout action to a full commit SHA, does not use a third-party
 release action, and publishes a SHA-256 checksum with each DMG. The current
 beta is ad-hoc signed but not Apple-notarized; verify the checksum before
-opening it.
+opening it. Installation instructions never require disabling Gatekeeper or
+clearing the quarantine attribute.

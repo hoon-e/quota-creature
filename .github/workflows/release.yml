@@ -3,7 +3,7 @@ name: Release DMG
 on:
   push:
     tags:
-      - v0.0.1-beta
+      - v0.0.2-beta
 
 permissions:
   contents: read

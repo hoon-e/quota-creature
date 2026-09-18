@@ -4,7 +4,8 @@ A tiny, local-only macOS menu-bar creature for current Codex usage. It shows
 the rate-limit window for personal plans and the monthly credit limit exposed
 by Codex for Business and Enterprise workspaces.
 
-QuotaCreature is unofficial and is not affiliated with or endorsed by OpenAI.
+QuotaCreature is unofficial and is not affiliated with or endorsed by OpenAI
+or Anthropic.
 
 ## What it does
 
@@ -27,15 +28,16 @@ parse terminal output.
 
 ## Download the beta
 
-The `v0.0.1-beta` DMG supports Apple silicon Macs running macOS 14 or
+The `v0.0.2-beta` DMG supports Apple silicon Macs running macOS 14 or
 later. A logged-in Codex CLI is still required for usage data.
 
-[Download QuotaCreature v0.0.1-beta](https://github.com/hoon-e/quota-creature/releases/download/v0.0.1-beta/QuotaCreature-v0.0.1-beta.dmg)
-· [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v0.0.1-beta/QuotaCreature-v0.0.1-beta.dmg.sha256)
+[Download QuotaCreature v0.0.2-beta](https://github.com/hoon-e/quota-creature/releases/download/v0.0.2-beta/QuotaCreature-v0.0.2-beta.dmg)
+· [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v0.0.2-beta/QuotaCreature-v0.0.2-beta.dmg.sha256)
 
 Open the DMG and drag QuotaCreature into Applications. This beta is ad-hoc
 signed but not Apple-notarized, so macOS may require Control-clicking the app
-and choosing Open on first launch.
+and choosing Open on first launch. Do not disable Gatekeeper or clear the
+quarantine attribute; if the checksum does not match, delete the download.
 
 ## Build from source
 

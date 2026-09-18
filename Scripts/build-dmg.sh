@@ -2,8 +2,10 @@
 set -euo pipefail
 
 root_dir="${0:A:h:h}"
-release_tag="${1:-v0.0.1-beta}"
+release_tag="${1:-v0.0.2-beta}"
 output="${2:-$root_dir/dist/QuotaCreature-$release_tag.dmg}"
+background="$root_dir/Assets/DMG/installer.png"
+finder_layout="$root_dir/Assets/DMG/DS_Store"
 
 if [[ ! "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
     print -u2 "Invalid release tag: $release_tag"
@@ -23,6 +25,10 @@ if [[ -e "$output" || -e "$checksum" ]]; then
     print -u2 "Refusing to overwrite an existing release artifact."
     exit 1
 fi
+if [[ ! -f "$background" || ! -f "$finder_layout" ]]; then
+    print -u2 "DMG layout assets are missing."
+    exit 1
+fi
 
 release_label="${release_tag#v}"
 app_version="${release_label%%-*}"
@@ -40,10 +46,13 @@ cleanup() {
 trap cleanup EXIT
 
 /usr/bin/install -d -m 755 "${output:h}" "$staging"
+/usr/bin/install -d -m 755 "$staging/.background"
 "$root_dir/Scripts/build-app.sh" \
     "$staging/QuotaCreature.app" \
     "$app_version" \
     "$release_label"
+/usr/bin/install -m 644 "$background" "$staging/.background/installer.png"
+/usr/bin/install -m 644 "$finder_layout" "$staging/.DS_Store"
 ln -s /Applications "$staging/Applications"
 
 hdiutil create \

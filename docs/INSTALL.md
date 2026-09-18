@@ -27,20 +27,23 @@ Its absence does not affect Codex usage. If it is present, QuotaCreature shows
 the Claude Code Beta status card without launching Claude or reading its local
 credentials, sessions, logs, or terminal output.
 
-## Install v0.0.1-beta
+## Install v0.0.2-beta
 
-Download the [DMG](https://github.com/hoon-e/quota-creature/releases/download/v0.0.1-beta/QuotaCreature-v0.0.1-beta.dmg)
-and its [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v0.0.1-beta/QuotaCreature-v0.0.1-beta.dmg.sha256).
+Download the [DMG](https://github.com/hoon-e/quota-creature/releases/download/v0.0.2-beta/QuotaCreature-v0.0.2-beta.dmg)
+and its [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v0.0.2-beta/QuotaCreature-v0.0.2-beta.dmg.sha256).
 To verify files downloaded into the same directory:
 
 ```zsh
-shasum -a 256 -c QuotaCreature-v0.0.1-beta.dmg.sha256
+shasum -a 256 -c QuotaCreature-v0.0.2-beta.dmg.sha256
 ```
 
-Open the DMG and drag `QuotaCreature.app` onto the Applications shortcut.
-The beta is ad-hoc signed but not Apple-notarized. If Gatekeeper blocks the
-first launch, Control-click the app in Finder, choose Open, then confirm Open.
-QuotaCreature has no updater; replace the app manually for future releases.
+Open the DMG and drag `QuotaCreature.app` onto the Applications shortcut. The
+beta is ad-hoc signed but not Apple-notarized, so an unidentified-developer or
+malware-check warning is expected. For the first launch, Control-click the app
+in Finder, choose Open, then confirm Open. Do not disable Gatekeeper or run an
+`xattr` command to bypass quarantine. If the checksum does not match, or macOS
+says the app is damaged, delete it and download it again. QuotaCreature has no
+updater; replace the app manually for future releases.
 
 ## Run from source
 
@@ -76,7 +79,7 @@ quit the old app, move its bundle to Trash in Finder, then run the script again.
 To build release artifacts locally:
 
 ```zsh
-Scripts/build-dmg.sh v0.0.1-beta
+Scripts/build-dmg.sh v0.0.2-beta
 ```
 
 The DMG and checksum are written under `dist/`.

@@ -28,18 +28,18 @@ cleanup() {
 trap cleanup EXIT
 
 app="$test_root/QuotaCreature.app"
-"$build_app" "$app" "0.0.1" "0.0.1-beta"
+"$build_app" "$app" "0.0.2" "0.0.2-beta"
 
 plist="$app/Contents/Info.plist"
 [[ -x "$app/Contents/MacOS/QuotaCreature" ]]
 [[ -f "$app/Contents/Resources/AppIcon.icns" ]]
-[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")" == "0.0.1" ]]
-[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleGetInfoString' "$plist")" == "QuotaCreature 0.0.1-beta" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")" == "0.0.2" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleGetInfoString' "$plist")" == "QuotaCreature 0.0.2-beta" ]]
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconFile' "$plist")" == "AppIcon" ]]
 codesign --verify --deep --strict "$app"
 
-dmg="$test_root/QuotaCreature-v0.0.1-beta.dmg"
-"$build_dmg" "v0.0.1-beta" "$dmg"
+dmg="$test_root/QuotaCreature-v0.0.2-beta.dmg"
+"$build_dmg" "v0.0.2-beta" "$dmg"
 
 [[ -f "$dmg" ]]
 [[ -f "$dmg.sha256" ]]
@@ -56,5 +56,9 @@ mounted=true
 [[ -d "$mount_point/QuotaCreature.app" ]]
 [[ -L "$mount_point/Applications" ]]
 [[ "$(readlink "$mount_point/Applications")" == "/Applications" ]]
+[[ -f "$mount_point/.background/installer.png" ]]
+[[ -f "$mount_point/.DS_Store" ]]
+[[ "$(sips -g pixelWidth "$mount_point/.background/installer.png" | awk '/pixelWidth:/ { print $2 }')" == "660" ]]
+[[ "$(sips -g pixelHeight "$mount_point/.background/installer.png" | awk '/pixelHeight:/ { print $2 }')" == "400" ]]
 
 print "Packaging checks passed."
