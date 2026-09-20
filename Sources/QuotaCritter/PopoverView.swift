@@ -1,72 +1,100 @@
 import AppKit
 import SwiftUI
 
+/// One vocabulary for both providers: the same header, meter, rows, states and
+/// footer render for Codex and Claude Code, so switching tabs never changes the
+/// shape of the panel, only its numbers.
 struct PopoverView: View {
     @ObservedObject var store: UsageStore
 
     var body: some View {
-        VStack(spacing: 16) {
-            Picker(
-                "Provider",
-                selection: Binding(
-                    get: { store.selectedProvider },
-                    set: { store.selectProvider($0) }
-                )
-            ) {
-                Text("Codex").tag(UsageProvider.codex)
-                Text("Claude Code").tag(UsageProvider.claude)
+        VStack(alignment: .leading, spacing: 14) {
+            providerPicker
+            header
+            content
+            Divider()
+                .opacity(0.5)
+            footer
+        }
+        .padding(16)
+        .frame(width: 320)
+    }
+
+    private var providerPicker: some View {
+        Picker(
+            "Provider",
+            selection: Binding(
+                get: { store.selectedProvider },
+                set: { store.selectProvider($0) }
+            )
+        ) {
+            ForEach(UsageProvider.allCases, id: \.self) { provider in
+                Text(store.tabTitle(for: provider)).tag(provider)
             }
-            .pickerStyle(.segmented)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .monospacedDigit()
+    }
 
-            Picker(
-                "Creature",
-                selection: Binding(
-                    get: { store.selectedCreature.id },
-                    set: { store.selectCreature(id: $0) }
-                )
-            ) {
-                ForEach(CreatureStyle.all) { style in
-                    Text(style.displayName).tag(style.id)
-                }
-            }
-            .pickerStyle(.segmented)
+    private var header: some View {
+        HStack(alignment: .center, spacing: 14) {
+            PixelCreatureView(
+                style: store.selectedCreature,
+                mood: store.displayedMood,
+                activity: store.displayedActivity,
+                now: store.animationDate
+            )
+            .frame(width: 76, height: 76)
 
-            HStack(spacing: 14) {
-                PixelCreatureView(
-                    style: store.selectedCreature,
-                    mood: store.displayedMood,
-                    activity: store.displayedActivity,
-                    now: store.animationDate
-                )
-                    .frame(width: 86, height: 86)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("QuotaCreature")
-                        .font(.headline)
-                    Text(store.displayedMenuTitle)
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                    Text(primaryResetText)
-                        .font(.subheadline)
+            VStack(alignment: .leading, spacing: 2) {
+                if let snapshot = store.displayedState.snapshot {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text("\(snapshot.remainingPercent)%")
+                            .font(.system(size: 34, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                        Text("left")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(headlineDetail(for: snapshot))
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
+                } else {
+                    Text(placeholderHeadline)
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    if let detail = placeholderDetail {
+                        Text(detail)
+                            .font(.footnote)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
-                Spacer()
             }
+            .accessibilityElement(children: .combine)
 
-            if let snapshot = store.displayedState.snapshot {
+            Spacer(minLength: 0)
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if let snapshot = store.displayedState.snapshot {
+            VStack(alignment: .leading, spacing: 12) {
                 switch snapshot {
                 case let .rateLimits(primary, secondary):
-                    RateLimitRow(
-                        title: primaryWindowTitle,
-                        window: primary,
-                        now: store.currentDate
-                    )
-
+                    UsageMeter(remainingPercent: primary.remainingPercent)
                     if let secondary {
-                        RateLimitRow(title: secondaryWindowTitle, window: secondary, now: store.currentDate)
+                        LimitRow(
+                            title: secondary.title,
+                            remainingPercent: secondary.remainingPercent,
+                            resetDate: secondary.resetDate,
+                            now: store.currentDate
+                        )
                     }
                 case let .monthlyCredits(limit):
-                    MonthlyCreditLimitRow(limit: limit, now: store.currentDate)
+                    UsageMeter(remainingPercent: limit.remainingPercent)
+                    CreditDetailRow(limit: limit)
                     Toggle(
                         "Notify 1 week before reset",
                         isOn: Binding(
@@ -75,142 +103,360 @@ struct PopoverView: View {
                         )
                     )
                     .font(.subheadline)
+                    .toggleStyle(.checkbox)
                 }
-            } else if store.selectedProvider == .claude {
-                ClaudeSetupCard(isInstalled: store.claudeIsInstalled)
-            } else if store.displayedState.showsLoadingIndicator {
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Refreshing Codex usage…")
-                        .foregroundStyle(.secondary)
-                    Spacer()
+
+                if let message = store.displayedFailureMessage {
+                    NoticeRow(icon: "exclamationmark.triangle", message: message)
                 }
-            } else {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle")
-                    Text("Usage unavailable")
-                        .foregroundStyle(.secondary)
-                    Spacer()
+                if store.selectedProvider == .claude, store.claudeStatusLine == .ours {
+                    statusLineFootnote
                 }
             }
+        } else if store.selectedProvider == .claude {
+            ClaudeSetupCard(store: store)
+        } else if store.displayedState.showsLoadingIndicator {
+            UsageSkeleton()
+        } else {
+            CodexUnavailableCard(message: store.displayedFailureMessage ?? UsageFailure.genericRecovery)
+        }
+    }
 
-            if let error = store.displayedState.errorMessage {
-                Text(error)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            HStack {
-                Button("Refresh") {
+    private var footer: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Text(store.lastUpdatedDescription)
+                    .font(.caption)
+                    .foregroundStyle(store.lastUpdateIsStale ? AnyShapeStyle(Palette.warning) : AnyShapeStyle(.tertiary))
+                Spacer(minLength: 0)
+                Button {
                     store.refresh()
+                } label: {
+                    Label("Refresh", systemImage: "arrow.clockwise")
                 }
-                Spacer()
+                .controlSize(.small)
+                .keyboardShortcut("r", modifiers: .command)
+            }
+
+            HStack(spacing: 8) {
+                Text("Creature")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+
+                Picker(
+                    "Creature",
+                    selection: Binding(
+                        get: { store.selectedCreature.id },
+                        set: { store.selectCreature(id: $0) }
+                    )
+                ) {
+                    ForEach(CreatureStyle.all) { style in
+                        Text(style.displayName).tag(style.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .controlSize(.small)
+                .labelsHidden()
+                .fixedSize()
+
+                Spacer(minLength: 0)
+
                 Button("Quit") {
                     store.quit()
                 }
+                .buttonStyle(.plain)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .keyboardShortcut("q", modifiers: .command)
             }
+        }
+    }
 
-            Text("Local only. No usage history is stored.")
+    @ViewBuilder
+    private var statusLineFootnote: some View {
+        HStack(spacing: 6) {
+            Text("statusLine installed by QuotaCreature")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
+            Button("Remove") {
+                store.disableClaudeStatusLine()
+            }
+            .buttonStyle(.plain)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
         }
-        .padding(16)
-        .frame(width: 320)
     }
 
-    private var primaryResetText: String {
-        guard let snapshot = store.displayedState.snapshot else {
-            return store.selectedProvider == .claude ? "Waiting for Claude usage" : "Waiting for Codex"
+    private func headlineDetail(for snapshot: UsageSnapshot) -> String {
+        if case .monthlyCredits = snapshot {
+            return "Monthly credits · \(resetDescription(for: snapshot.resetDate, now: store.currentDate))"
         }
-        return "Resets in \(remainingTime(until: snapshot.resetDate))"
+        return resetDescription(for: snapshot.resetDate, now: store.currentDate)
     }
 
-    private var primaryWindowTitle: String {
-        store.selectedProvider == .claude ? "5-hour limit" : "Primary window"
+    private var placeholderHeadline: String {
+        switch store.selectedProvider {
+        case .codex:
+            store.displayedState.showsLoadingIndicator
+                ? "Reading usage"
+                : (store.codexFailure ?? .noResponse).userTitle
+        case .claude:
+            store.claudeStatusLine == .ours ? "Waiting for a turn" : "Not set up"
+        }
     }
 
-    private var secondaryWindowTitle: String {
-        store.selectedProvider == .claude ? "7-day limit" : "Secondary window"
+    /// Only the loading state adds a second line: every other empty state is
+    /// explained by the card underneath, and saying it twice reads as noise.
+    private var placeholderDetail: String? {
+        guard store.selectedProvider == .codex, store.displayedState.showsLoadingIndicator else {
+            return nil
+        }
+        return "Asking the local Codex CLI"
     }
+
 }
 
+// MARK: - Provider states
+
+/// Claude Code publishes usage only through its `statusLine`, so this card is
+/// the whole setup path: one click when the slot is free, a copyable command
+/// when the user already owns that slot.
 private struct ClaudeSetupCard: View {
-    let isInstalled: Bool
+    @ObservedObject var store: UsageStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Claude Code")
-                .font(.subheadline.weight(.semibold))
-            if !isInstalled {
-                Text("Claude Code was not found in standard locations.")
-                    .foregroundStyle(.secondary)
-                Text("Install and sign in to Claude Code to enable local detection.")
+        VStack(alignment: .leading, spacing: 10) {
+            if !store.claudeIsInstalled {
+                NoticeRow(
+                    icon: "questionmark.circle",
+                    message: "Claude Code was not found in the usual locations."
+                )
+                Text("Install Claude Code and sign in, then refresh.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
-                Text("No usage data yet. Run /statusline in a Claude Code session and paste this script:")
+                Text(explanation)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text(ClaudeStatusFile.statusLineSetupCommand)
-                    .font(.system(.caption2, design: .monospaced))
-                    .lineLimit(3)
-                    .truncationMode(.tail)
-                    .textSelection(.enabled)
-                Button("Copy Setup Command") {
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(ClaudeStatusFile.statusLineSetupCommand, forType: .string)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let error = store.claudeStatusLineError {
+                    NoticeRow(icon: "exclamationmark.triangle", message: error)
                 }
-                .font(.footnote)
+
+                HStack(spacing: 8) {
+                    if store.claudeStatusLine == .absent {
+                        Button("Enable in Claude Code") {
+                            store.enableClaudeStatusLine()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
+                    Button("Copy command") {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(ClaudeStatusFile.statusLineSetupCommand, forType: .string)
+                    }
+                    .controlSize(.small)
+                    Spacer(minLength: 0)
+                }
+
+                Text("QuotaCreature writes only the statusLine entry, keeps a backup of your settings, and never reads your Claude conversations.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-}
 
-private struct RateLimitRow: View {
-    let title: String
-    let window: RateLimitWindow
-    let now: Date
-
-    var body: some View {
-        HStack {
-            Text(title)
-            Spacer()
-            Text("\(window.remainingPercent)% left · \(remainingTime(until: window.resetDate, now: now))")
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
+    private var explanation: String {
+        switch store.claudeStatusLine {
+        case .absent:
+            "Add a statusLine command to your Claude Code settings. It writes the rate-limit fields to a local cache file this app reads."
+        case .ours:
+            "The statusLine is installed. Usage appears after your next Claude Code message."
+        case .foreign:
+            "You already have a statusLine. Copy the command and merge it into your own script."
+        case .unreadable:
+            "~/.claude/settings.json could not be read as JSON. Copy the command and add it yourself."
         }
-        .font(.subheadline)
     }
 }
 
-private struct MonthlyCreditLimitRow: View {
-    let limit: MonthlyCreditLimit
-    let now: Date
+private struct CodexUnavailableCard: View {
+    let message: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Monthly credit limit")
-            Text(
-                "\(limit.used.formatted(.number.precision(.fractionLength(0)))) of \(limit.total.formatted(.number.precision(.fractionLength(0)))) credits used · \(limit.remainingPercent)% left · \(remainingTime(until: limit.resetDate, now: now))"
-            )
-            .foregroundStyle(.secondary)
-            .monospacedDigit()
+        VStack(alignment: .leading, spacing: 8) {
+            NoticeRow(icon: "exclamationmark.triangle", message: message)
+            Text("QuotaCreature asks the local Codex CLI and never falls back to reading files or terminal output.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .font(.subheadline)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
+/// A resting shape in the place the numbers will occupy, so the first refresh
+/// settles into the layout instead of replacing a spinner with it.
+private struct UsageSkeleton: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Capsule()
+                .fill(Palette.track)
+                .frame(height: 8)
+            Capsule()
+                .fill(Palette.track)
+                .frame(width: 150, height: 10)
+        }
+        .accessibilityLabel("Reading usage")
+    }
+}
+
+// MARK: - Pieces
+
+private struct UsageMeter: View {
+    let remainingPercent: Int
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Palette.track)
+                Capsule()
+                    .fill(Palette.tint(forRemaining: remainingPercent))
+                    .frame(width: max(3, proxy.size.width * fraction))
+            }
+        }
+        .frame(height: 8)
+        .animation(.easeOut(duration: 0.25), value: remainingPercent)
+        .accessibilityLabel("\(remainingPercent) percent left")
+    }
+
+    private var fraction: Double {
+        min(1, max(0, Double(remainingPercent) / 100))
+    }
+}
+
+private struct LimitRow: View {
+    let title: String
+    let remainingPercent: Int
+    let resetDate: Date
+    let now: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text("\(remainingPercent)% left · \(remainingTime(until: resetDate, now: now))")
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+            .font(.subheadline)
+
+            UsageMeter(remainingPercent: remainingPercent)
+                .frame(height: 5)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct CreditDetailRow: View {
+    let limit: MonthlyCreditLimit
+
+    var body: some View {
+        Text(
+            "\(limit.used.formatted(.number.precision(.fractionLength(0)))) of \(limit.total.formatted(.number.precision(.fractionLength(0)))) credits used"
+        )
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .monospacedDigit()
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct NoticeRow: View {
+    let icon: String
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: icon)
+                .foregroundStyle(Palette.warning)
+            Text(message)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .font(.footnote)
+    }
+}
+
+enum Palette {
+    /// The creature's own indigo and mint, tuned to stay legible as data.
+    static let ok = Color(red: 0.16, green: 0.71, blue: 0.53)
+    static let warning = Color(red: 0.85, green: 0.56, blue: 0.13)
+    static let critical = Color(red: 0.87, green: 0.32, blue: 0.30)
+    static let track = Color.primary.opacity(0.12)
+
+    static func tint(forRemaining remaining: Int) -> Color {
+        switch remaining {
+        case ..<10:
+            critical
+        case ..<25:
+            warning
+        default:
+            ok
+        }
+    }
+}
+
+// MARK: - Formatting
+
+/// Compact by design: a menu-bar panel is read in a glance, and zeroed units
+/// ("0d 0h 4m") are noise at that size.
 func remainingTime(until date: Date, now: Date = Date()) -> String {
-    let seconds = max(0, Int(date.timeIntervalSince(now)))
+    let seconds = Int(date.timeIntervalSince(now))
+    guard seconds > 0 else {
+        return "now"
+    }
+
     let days = seconds / 86_400
     let hours = (seconds % 86_400) / 3_600
     let minutes = (seconds % 3_600) / 60
 
-    return "\(days)d \(hours)h \(minutes)m"
+    if days > 0 {
+        return "\(days)d \(hours)h"
+    }
+    if hours > 0 {
+        return "\(hours)h \(minutes)m"
+    }
+    return "\(max(1, minutes))m"
+}
+
+/// A span, not a wall clock: the panel is 320pt wide, and a localized time
+/// string pushed the header line past it.
+func resetDescription(for date: Date, now: Date = Date()) -> String {
+    guard date > now else {
+        return "resetting now"
+    }
+    return "resets in \(remainingTime(until: date, now: now))"
+}
+
+/// Relative age of the last reading, for the footer.
+func updatedDescription(for date: Date?, now: Date = Date()) -> String {
+    guard let date else {
+        return "Never updated"
+    }
+    let seconds = Int(now.timeIntervalSince(date))
+    if seconds < 60 {
+        return "Updated just now"
+    }
+    return "Updated \(remainingTime(until: now, now: date)) ago"
 }
 
 private struct PixelCreatureView: View {

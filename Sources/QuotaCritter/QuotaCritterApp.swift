@@ -44,9 +44,14 @@ final class UsageStore: ObservableObject {
     @Published private(set) var currentDate = Date()
     @Published private(set) var animationDate = Date()
     @Published private(set) var activity: UsageActivity = .idle
-    @Published private(set) var selectedProvider: UsageProvider = .codex
+    @Published private(set) var selectedProvider: UsageProvider = .claude
     @Published private(set) var selectedCreature: CreatureStyle
     @Published private(set) var monthlyResetReminderEnabled: Bool
+    @Published private(set) var claudeStatusLine: ClaudeStatusLineInstaller.State = .absent
+    @Published private(set) var claudeStatusLineError: String?
+    @Published private(set) var lastCodexUpdate: Date?
+    @Published private(set) var lastClaudeUpdate: Date?
+    @Published private(set) var lastCodexFailure: UsageError?
 
     private let client = AppServerRateLimitClient()
     private let resetNotifier = MonthlyResetNotifier()
@@ -83,12 +88,50 @@ final class UsageStore: ObservableObject {
     }
 
     var displayedMenuTitle: String {
+        displayedState.menuTitle
+    }
+
+    /// Both providers stay readable from the tab row, so the panel answers
+    /// "how much is left on each" without switching tabs.
+    func tabTitle(for provider: UsageProvider) -> String {
+        let state = provider == .codex ? state : claudeState
+        return "\(provider.displayName)  \(state.menuTitle)"
+    }
+
+    var codexFailure: UsageError? {
+        guard selectedProvider == .codex, case .unavailable = state else {
+            return nil
+        }
+        return lastCodexFailure ?? .noResponse
+    }
+
+    var displayedFailureMessage: String? {
         switch selectedProvider {
         case .codex:
-            state.menuTitle
+            return codexFailure?.userRecovery
         case .claude:
-            claudeState.snapshot.map { "\($0.remainingPercent)%" } ?? "β"
+            guard case .unavailable = claudeState, claudeState.snapshot != nil else {
+                return nil
+            }
+            return UsageFailure.claudeStale
         }
+    }
+
+    var lastUpdate: Date? {
+        selectedProvider == .codex ? lastCodexUpdate : lastClaudeUpdate
+    }
+
+    var lastUpdatedDescription: String {
+        updatedDescription(for: lastUpdate, now: currentDate)
+    }
+
+    /// Claude's cache only moves when the user takes a turn, so an old reading
+    /// is normal there and worth flagging rather than hiding.
+    var lastUpdateIsStale: Bool {
+        guard let lastUpdate else {
+            return false
+        }
+        return currentDate.timeIntervalSince(lastUpdate) > 15 * 60
     }
 
     var displayedMood: PetMood {
@@ -132,23 +175,48 @@ final class UsageStore: ObservableObject {
             case let .success(snapshot):
                 activity = activityTracker.record(snapshot, at: currentDate)
                 state = .ready(snapshot)
+                lastCodexUpdate = Date()
+                lastCodexFailure = nil
                 if case let .monthlyCredits(limit) = snapshot,
                    monthlyResetReminderEnabled {
                     await resetNotifier.schedule(for: limit)
                 }
-            case .failure:
+            case let .failure(error):
+                lastCodexFailure = error
                 state = .unavailable(state.snapshot ?? previous)
             }
         }
     }
 
     private func refreshClaudeState() {
+        claudeStatusLine = ClaudeStatusLineInstaller.state()
+        lastClaudeUpdate = ClaudeStatusFile.lastUpdated()
         switch ClaudeStatusFile.read() {
         case let .success(snapshot):
             claudeState = .ready(snapshot)
         case .failure:
             claudeState = .unavailable(claudeState.snapshot)
         }
+    }
+
+    /// Writes the opt-in statusLine command into the user's Claude Code
+    /// settings, only from an explicit click in the Claude tab.
+    func enableClaudeStatusLine() {
+        apply(ClaudeStatusLineInstaller.install())
+    }
+
+    func disableClaudeStatusLine() {
+        apply(ClaudeStatusLineInstaller.remove())
+    }
+
+    private func apply(_ result: Result<Void, ClaudeStatusLineInstaller.InstallError>) {
+        switch result {
+        case .success:
+            claudeStatusLineError = nil
+        case let .failure(error):
+            claudeStatusLineError = error.message
+        }
+        refreshClaudeState()
     }
 
     func setMonthlyResetReminderEnabled(_ enabled: Bool) {

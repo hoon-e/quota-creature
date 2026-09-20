@@ -51,7 +51,16 @@ final class UsageSnapshotTests: XCTestCase {
 
         XCTAssertEqual(state.menuTitle, "50%")
         XCTAssertEqual(state.petMood, .focused)
-        XCTAssertEqual(state.errorMessage, "Could not refresh usage.")
+    }
+
+    func testFailureCopyNamesRecoveryWithoutQuotingTheProvider() {
+        XCTAssertEqual(UsageError.codexNotFound.userTitle, UsageFailure.missingTitle)
+        XCTAssertEqual(UsageError.codexNotFound.userRecovery, UsageFailure.missingRecovery)
+
+        for error in [UsageError.timedOut, .launchFailed, .noResponse, .invalidRateLimit, .oversizedResponse] {
+            XCTAssertEqual(error.userTitle, UsageFailure.genericTitle)
+            XCTAssertEqual(error.userRecovery, UsageFailure.genericRecovery)
+        }
     }
 
     func testOnlyInitialStateShowsLoadingIndicator() {
@@ -59,20 +68,50 @@ final class UsageSnapshotTests: XCTestCase {
         XCTAssertFalse(UsageViewState.unavailable(nil).showsLoadingIndicator)
     }
 
-    func testRemainingTimeIncludesDaysHoursAndMinutes() {
-        let now = Date(timeIntervalSince1970: 1_000)
-        let reset = now.addingTimeInterval(183_899)
-
-        XCTAssertEqual(remainingTime(until: reset, now: now), "2d 3h 4m")
+    func testWindowTitleComesFromTheReportedDurationNotTheProvider() throws {
+        XCTAssertEqual(try window(minutes: 300).title, "5-hour limit")
+        XCTAssertEqual(try window(minutes: 10_080).title, "7-day limit")
+        XCTAssertEqual(try window(minutes: 60).title, "1-hour limit")
+        XCTAssertEqual(try window(minutes: 15).title, "15-minute limit")
+        XCTAssertEqual(try window(minutes: 43_200).title, "30-day limit")
     }
 
-    func testExpiredRemainingTimeUsesZeroedUnits() {
+    private func window(minutes: Int) throws -> RateLimitWindow {
+        try RateLimitWindow(usedPercent: 10, windowDurationMins: minutes, resetsAt: 1_900_000_000)
+    }
+
+    func testRemainingTimeDropsUnitsThatAreZero() {
         let now = Date(timeIntervalSince1970: 1_000)
 
+        XCTAssertEqual(remainingTime(until: now.addingTimeInterval(183_899), now: now), "2d 3h")
+        XCTAssertEqual(remainingTime(until: now.addingTimeInterval(11_040), now: now), "3h 4m")
+        XCTAssertEqual(remainingTime(until: now.addingTimeInterval(240), now: now), "4m")
+    }
+
+    func testRemainingTimeRoundsUpBelowAMinuteAndStopsAtZero() {
+        let now = Date(timeIntervalSince1970: 1_000)
+
+        XCTAssertEqual(remainingTime(until: now.addingTimeInterval(20), now: now), "1m")
+        XCTAssertEqual(remainingTime(until: now.addingTimeInterval(-1), now: now), "now")
+    }
+
+    func testResetDescriptionStaysASpanSoTheHeaderLineFits() {
+        let now = Date(timeIntervalSince1970: 1_000)
+
+        XCTAssertEqual(resetDescription(for: now.addingTimeInterval(7_200), now: now), "resets in 2h 0m")
         XCTAssertEqual(
-            remainingTime(until: now.addingTimeInterval(-1), now: now),
-            "0d 0h 0m"
+            resetDescription(for: now.addingTimeInterval(183_899), now: now),
+            "resets in 2d 3h"
         )
+        XCTAssertEqual(resetDescription(for: now, now: now), "resetting now")
+    }
+
+    func testUpdatedDescriptionAdmitsWhenNothingHasBeenRead() {
+        let now = Date(timeIntervalSince1970: 100_000)
+
+        XCTAssertEqual(updatedDescription(for: nil, now: now), "Never updated")
+        XCTAssertEqual(updatedDescription(for: now.addingTimeInterval(-10), now: now), "Updated just now")
+        XCTAssertEqual(updatedDescription(for: now.addingTimeInterval(-600), now: now), "Updated 10m ago")
     }
 
     func testActivityStartsIdleThenBecomesActiveForSlowPositiveChange() throws {

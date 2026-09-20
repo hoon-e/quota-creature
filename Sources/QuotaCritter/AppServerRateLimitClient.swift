@@ -5,7 +5,7 @@ enum AppServerProtocol {
     static let maxResponseBytes = 65_536
     static let rateLimitRequestID = 2
     static let requestLines = [
-        #"{"method":"initialize","id":1,"params":{"clientInfo":{"name":"quota-creature","title":"QuotaCreature","version":"1.0.0"}}}"#,
+        #"{"method":"initialize","id":1,"params":{"clientInfo":{"name":"quota-creature","title":"QuotaCreature","version":"1.0.1"}}}"#,
         #"{"method":"initialized","params":{}}"#,
         #"{"method":"account/rateLimits/read","id":2}"#
     ]

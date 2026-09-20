@@ -36,6 +36,20 @@ struct RateLimitWindow: Equatable, Sendable {
     var resetDate: Date {
         Date(timeIntervalSince1970: resetsAt)
     }
+
+    /// Named from the duration the provider actually reported. Claude drops its
+    /// five-hour window from the cache the moment it expires, so the next window
+    /// in line becomes the headline: without this the panel kept the old label
+    /// and showed a seven-day number as "5-hour limit".
+    var title: String {
+        if windowDurationMins >= 1_440, windowDurationMins % 1_440 == 0 {
+            return "\(windowDurationMins / 1_440)-day limit"
+        }
+        if windowDurationMins >= 60, windowDurationMins % 60 == 0 {
+            return "\(windowDurationMins / 60)-hour limit"
+        }
+        return "\(windowDurationMins)-minute limit"
+    }
 }
 
 struct MonthlyCreditLimit: Equatable, Sendable {
@@ -115,6 +129,38 @@ enum UsageActivity: String, Equatable, Sendable {
 enum UsageProvider: String, CaseIterable, Hashable, Sendable {
     case codex
     case claude
+
+    var displayName: String {
+        switch self {
+        case .codex:
+            "Codex"
+        case .claude:
+            "Claude"
+        }
+    }
+}
+
+/// Fixed, app-owned failure copy. Raw App Server or CLI text is never rendered,
+/// so these strings name the problem and the recovery without quoting anything
+/// the provider said.
+enum UsageFailure {
+    static let genericTitle = "No usage"
+    static let genericRecovery = "Codex did not report a limit. Check codex login status, then refresh."
+    static let missingTitle = "Codex not found"
+    static let missingRecovery = "Install the Codex CLI and run codex login, then refresh."
+    static let claudeStale = "Showing the last reading. Claude updates it on your next message."
+}
+
+extension UsageError {
+    /// The header says what happened; the card says what to do about it. Neither
+    /// repeats the other, and neither quotes the provider.
+    var userTitle: String {
+        self == .codexNotFound ? UsageFailure.missingTitle : UsageFailure.genericTitle
+    }
+
+    var userRecovery: String {
+        self == .codexNotFound ? UsageFailure.missingRecovery : UsageFailure.genericRecovery
+    }
 }
 
 struct UsageActivityTracker {
@@ -207,14 +253,6 @@ enum UsageViewState: Equatable, Sendable {
 
     var petMood: PetMood {
         snapshot.map { PetMood(usedPercent: $0.usedPercent) } ?? .bright
-    }
-
-    var errorMessage: String? {
-        if case .unavailable = self {
-            "Could not refresh usage."
-        } else {
-            nil
-        }
     }
 
     var showsLoadingIndicator: Bool {

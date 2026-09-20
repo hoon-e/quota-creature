@@ -30,14 +30,14 @@ shows the Claude Code status card without launching Claude or reading its
 local credentials, sessions, logs, or terminal output — only the small cache
 file your own Claude Code session writes once you opt in.
 
-## Install v1.0.0
+## Install v1.0.1
 
-Download the [DMG](https://github.com/hoon-e/quota-creature/releases/download/v1.0.0/QuotaCreature-v1.0.0.dmg)
-and its [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v1.0.0/QuotaCreature-v1.0.0.dmg.sha256).
+Download the [DMG](https://github.com/hoon-e/quota-creature/releases/download/v1.0.1/QuotaCreature-v1.0.1.dmg)
+and its [SHA-256 checksum](https://github.com/hoon-e/quota-creature/releases/download/v1.0.1/QuotaCreature-v1.0.1.dmg.sha256).
 To verify files downloaded into the same directory:
 
 ```zsh
-shasum -a 256 -c QuotaCreature-v1.0.0.dmg.sha256
+shasum -a 256 -c QuotaCreature-v1.0.1.dmg.sha256
 ```
 
 Open the DMG and drag `QuotaCreature.app` onto the Applications shortcut. The
@@ -83,7 +83,7 @@ script again.
 To build release artifacts locally:
 
 ```zsh
-Scripts/build-dmg.sh v1.0.0
+Scripts/build-dmg.sh v1.0.1
 ```
 
 The DMG and checksum are written under `dist/`.
