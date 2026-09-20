@@ -51,7 +51,7 @@ final class UsageSnapshotTests: XCTestCase {
 
         XCTAssertEqual(state.menuTitle, "50%")
         XCTAssertEqual(state.petMood, .focused)
-        XCTAssertEqual(state.errorMessage, "Could not refresh Codex usage.")
+        XCTAssertEqual(state.errorMessage, "Could not refresh usage.")
     }
 
     func testOnlyInitialStateShowsLoadingIndicator() {
@@ -224,16 +224,6 @@ final class UsageSnapshotTests: XCTestCase {
         )
 
         XCTAssertNotEqual(blob.tiffRepresentation, sprout.tiffRepresentation)
-    }
-
-    func testClaudePresentationDoesNotReuseCodexQuota() throws {
-        let state = UsageViewState.ready(
-            try rateLimitSnapshot(usedPercent: 50, resetsAt: 1_900_000_000)
-        )
-
-        XCTAssertEqual(state.menuTitle(for: .codex), "50%")
-        XCTAssertEqual(state.menuTitle(for: .claude), "β")
-        XCTAssertEqual(state.petMood(for: .claude), .bright)
     }
 
     private func rateLimitSnapshot(

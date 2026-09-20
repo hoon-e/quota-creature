@@ -13,17 +13,30 @@ codex app-server --listen stdio://
 Codex rate-limit service
 ```
 
-The optional Claude Code Beta path is separate:
+The optional Claude Code path is separate:
 
 ```text
-Claude Code (Beta)
+Claude Code
         │ fixed absolute executable discovery only
         ▼
-Detected / unavailable card
+Detected / setup card
+        │ opt-in statusLine command (user-installed, shown by the app)
+        ▼
+~/Library/Application Support/com.quotacreature.quotacreature/claude-status.json
+        │ fixed path, 4 KiB cap, strict decode
+        ▼
+ClaudeStatusFile.read()
 ```
 
-This path launches no child process and returns no usage values. It checks
-fixed local executable locations with `FileManager.isExecutableFile(atPath:)`.
+This path launches no child process for Claude and never edits the user's
+Claude settings. Executable discovery checks fixed local locations with
+`FileManager.isExecutableFile(atPath:)`. Usage reading is a plain file read:
+the app shows (and lets the user copy) a `statusLine` command that, only
+once the user adds it to their own Claude Code settings, extracts
+`rate_limits.five_hour`/`seven_day` from Claude Code's documented statusLine
+JSON and writes just those fields to the cache file above. `ClaudeStatusFile`
+rejects files over 4 KiB, decodes strictly, validates percentages are in
+`0...100`, and drops any window whose `resets_at` has already passed.
 
 Each refresh creates one short-lived child process. The client sends exactly:
 

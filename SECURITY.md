@@ -21,15 +21,18 @@ These controls reduce known risks; they are not a guarantee that future
 vulnerabilities cannot exist. Security-impacting changes require an update to
 the threat model and tests for the affected trust boundary.
 
-Claude Code support remains Beta until a documented noninteractive output
-contract can be verified. Before a Claude usage reader can ship, it needs
-strict decoding, a response cap, timeout, sanitized environment, and tests.
+The Claude usage reader reads a fixed, app-owned cache file capped at 4 KiB
+with strict decoding and validated ranges; it never runs Claude, edits the
+user's Claude settings, or reads `~/.claude`. The cache file is only
+populated if the user opts in via a `statusLine` command copied from the
+app, using Claude Code's own documented `rate_limits` field.
 
 ## Release artifacts
 
-Tagged beta DMGs are built on a GitHub-hosted macOS runner. The workflow pins
-the official checkout action to a full commit SHA, does not use a third-party
-release action, and publishes a SHA-256 checksum with each DMG. The current
-beta is ad-hoc signed but not Apple-notarized; verify the checksum before
-opening it. Installation instructions never require disabling Gatekeeper or
+Tagged release DMGs are built on a GitHub-hosted macOS runner. The workflow
+pins the official checkout action to a full commit SHA, does not use a
+third-party release action, and publishes a SHA-256 checksum with each DMG.
+The current release is ad-hoc signed but not Apple-notarized; verify the
+checksum before opening it. Installation instructions never require
+disabling Gatekeeper or
 clearing the quarantine attribute.

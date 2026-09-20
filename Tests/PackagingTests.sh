@@ -28,18 +28,18 @@ cleanup() {
 trap cleanup EXIT
 
 app="$test_root/QuotaCreature.app"
-"$build_app" "$app" "0.0.3" "0.0.3-beta"
+"$build_app" "$app" "1.0.0" "1.0.0"
 
 plist="$app/Contents/Info.plist"
 [[ -x "$app/Contents/MacOS/QuotaCreature" ]]
 [[ -f "$app/Contents/Resources/AppIcon.icns" ]]
-[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")" == "0.0.3" ]]
-[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleGetInfoString' "$plist")" == "QuotaCreature 0.0.3-beta" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")" == "1.0.0" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleGetInfoString' "$plist")" == "QuotaCreature 1.0.0" ]]
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconFile' "$plist")" == "AppIcon" ]]
 codesign --verify --deep --strict "$app"
 
-dmg="$test_root/QuotaCreature-v0.0.3-beta.dmg"
-"$build_dmg" "v0.0.3-beta" "$dmg"
+dmg="$test_root/QuotaCreature-v1.0.0.dmg"
+"$build_dmg" "v1.0.0" "$dmg"
 
 [[ -f "$dmg" ]]
 [[ -f "$dmg.sha256" ]]

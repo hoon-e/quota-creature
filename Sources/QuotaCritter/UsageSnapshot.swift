@@ -205,21 +205,13 @@ enum UsageViewState: Equatable, Sendable {
         snapshot.map { "\($0.remainingPercent)%" } ?? "—"
     }
 
-    func menuTitle(for provider: UsageProvider) -> String {
-        provider == .codex ? menuTitle : "β"
-    }
-
     var petMood: PetMood {
         snapshot.map { PetMood(usedPercent: $0.usedPercent) } ?? .bright
     }
 
-    func petMood(for provider: UsageProvider) -> PetMood {
-        provider == .codex ? petMood : .bright
-    }
-
     var errorMessage: String? {
         if case .unavailable = self {
-            "Could not refresh Codex usage."
+            "Could not refresh usage."
         } else {
             nil
         }

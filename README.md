@@ -25,10 +25,12 @@ or Anthropic.
 
 ## Provider support
 
-Codex usage is the supported reader. Claude Code support is in Beta: the app
-can detect a local CLI, but its usage reader is still being tested. The Claude
-selection does not invoke Claude, read Claude credentials or local files, or
-parse terminal output.
+Codex usage is fully supported. Claude has no Codex-style "read rate limits
+without a turn" endpoint, so QuotaCreature reads a small cache file instead.
+Opening the Claude tab shows a one-line `statusLine` command to copy into
+your own Claude Code settings (via `/statusline`); once you've had one real
+conversation, usage appears the same way Codex's does. QuotaCreature never
+invokes Claude, edits your Claude settings, or reads `~/.claude`.
 
 ## Build from source
 

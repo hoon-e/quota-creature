@@ -23,9 +23,16 @@ login credential. See the official [Codex App Server
 documentation](https://learn.chatgpt.com/docs/app-server) for App Server
 transport and authentication context.
 
-Claude Code support is in Beta. The app may detect a local Claude executable,
-but does not persist its path, account, usage number, or credential. It does
-not run Claude or read Claude sessions, logs, configuration, or auth files.
+The app may detect a local Claude executable, but does not persist its path,
+account, or credential. It does not run Claude or read Claude sessions,
+logs, configuration, or auth files.
+
+If the user opts in, Claude usage is read from one small cache file the app
+owns (`~/Library/Application Support/com.quotacreature.quotacreature/claude-status.json`),
+containing only rate-limit percentages and reset timestamps. That file is
+populated solely by a `statusLine` command the user copies from the app and
+adds to their own Claude Code settings; QuotaCreature never writes to it or
+edits the user's settings.
 
 The project contains no analytics, crash reporter, update checker, HTTP
 client, WebSocket client, listener, account database, or usage-history file.

@@ -19,7 +19,8 @@
 | Network exposure | The companion opens no listener and uses no HTTP/WebSocket client. App Server communication is local stdio only. |
 | Sensitive UI error output | Errors are mapped to one generic message; raw App Server text is never rendered or logged. |
 | Unwanted notification or usage persistence | Monthly-reset notifications are opt-in. The app stores only the preference and scheduled reset timestamp, never a usage history, account ID, or credential. |
-| Claude Code Beta access | Claude detection checks fixed executable locations only. It does not run Claude, read `~/.claude`, credentials, sessions, or logs, or capture terminal output. |
+| Claude Code detection | Claude detection checks fixed executable locations only. It does not run Claude, read `~/.claude`, credentials, sessions, or logs, or capture terminal output. |
+| Claude Code usage reading | Usage is read from one fixed, app-owned cache file (`~/Library/Application Support/com.quotacreature.quotacreature/claude-status.json`), capped at 4 KiB and strictly decoded; only `rate_limits.five_hour`/`seven_day` (`used_percentage`, `resets_at`) are accepted, and an expired window is discarded. The app never writes this file, never edits the user's Claude settings, and never reads anything under `~/.claude`. The file is populated only if the user opts in by adding a `statusLine` command (shown, never auto-installed) inside their own Claude Code settings. |
 | Release workflow compromise | The tag workflow pins the official checkout action to a full commit SHA, disables persisted Git credentials, uses only the repository-scoped `GITHUB_TOKEN`, and publishes a SHA-256 checksum. No third-party release action runs. |
 
 ## Scope limits
@@ -32,10 +33,12 @@ This source-built MVP is not sandboxed for the Mac App Store because it must
 launch the user’s existing Codex CLI. It should be reviewed before use in
 managed or high-security environments.
 
-Claude Code remains Beta until a documented, noninteractive, read-only usage
-response can be tested. There is no fallback to `claude -p`, browser
-automation, direct provider HTTP, or local-file parsing.
+Claude Code has no Codex-style endpoint to read rate limits without a real
+turn, so usage only appears once the user's own Claude Code session has
+produced one and their opt-in `statusLine` command has written it to the
+cache file above. There is no fallback to `claude -p`, browser automation,
+direct provider HTTP, or parsing `~/.claude`.
 
-The beta DMG is ad-hoc signed rather than Developer ID signed and notarized.
-The checksum detects accidental or post-release file changes but does not
+The DMG is ad-hoc signed rather than Developer ID signed and notarized. The
+checksum detects accidental or post-release file changes but does not
 replace Apple notarization or establish the publisher's identity.

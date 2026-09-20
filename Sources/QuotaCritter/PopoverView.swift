@@ -14,7 +14,7 @@ struct PopoverView: View {
                 )
             ) {
                 Text("Codex").tag(UsageProvider.codex)
-                Text("Claude Code (Beta)").tag(UsageProvider.claude)
+                Text("Claude Code").tag(UsageProvider.claude)
             }
             .pickerStyle(.segmented)
 
@@ -53,19 +53,17 @@ struct PopoverView: View {
                 Spacer()
             }
 
-            if store.selectedProvider == .claude {
-                ClaudeBetaCard(isInstalled: store.claudeIsInstalled)
-            } else if let snapshot = store.state.snapshot {
+            if let snapshot = store.displayedState.snapshot {
                 switch snapshot {
                 case let .rateLimits(primary, secondary):
                     RateLimitRow(
-                        title: "Primary window",
+                        title: primaryWindowTitle,
                         window: primary,
                         now: store.currentDate
                     )
 
                     if let secondary {
-                        RateLimitRow(title: "Secondary window", window: secondary, now: store.currentDate)
+                        RateLimitRow(title: secondaryWindowTitle, window: secondary, now: store.currentDate)
                     }
                 case let .monthlyCredits(limit):
                     MonthlyCreditLimitRow(limit: limit, now: store.currentDate)
@@ -78,7 +76,9 @@ struct PopoverView: View {
                     )
                     .font(.subheadline)
                 }
-            } else if store.state.showsLoadingIndicator {
+            } else if store.selectedProvider == .claude {
+                ClaudeSetupCard(isInstalled: store.claudeIsInstalled)
+            } else if store.displayedState.showsLoadingIndicator {
                 HStack(spacing: 8) {
                     ProgressView()
                         .controlSize(.small)
@@ -95,8 +95,7 @@ struct PopoverView: View {
                 }
             }
 
-            if store.selectedProvider == .codex,
-               let error = store.state.errorMessage {
+            if let error = store.displayedState.errorMessage {
                 Text(error)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -104,10 +103,8 @@ struct PopoverView: View {
             }
 
             HStack {
-                if store.selectedProvider == .codex {
-                    Button("Refresh") {
-                        store.refresh()
-                    }
+                Button("Refresh") {
+                    store.refresh()
                 }
                 Spacer()
                 Button("Quit") {
@@ -124,33 +121,48 @@ struct PopoverView: View {
     }
 
     private var primaryResetText: String {
-        guard store.selectedProvider == .codex else {
-            return "Usage reader is in beta"
-        }
-        guard let snapshot = store.state.snapshot else {
-            return "Waiting for Codex"
+        guard let snapshot = store.displayedState.snapshot else {
+            return store.selectedProvider == .claude ? "Waiting for Claude usage" : "Waiting for Codex"
         }
         return "Resets in \(remainingTime(until: snapshot.resetDate))"
     }
+
+    private var primaryWindowTitle: String {
+        store.selectedProvider == .claude ? "5-hour limit" : "Primary window"
+    }
+
+    private var secondaryWindowTitle: String {
+        store.selectedProvider == .claude ? "7-day limit" : "Secondary window"
+    }
 }
 
-private struct ClaudeBetaCard: View {
+private struct ClaudeSetupCard: View {
     let isInstalled: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Claude Code (Beta)")
+            Text("Claude Code")
                 .font(.subheadline.weight(.semibold))
-            Text(
-                isInstalled
-                    ? "Claude Code is detected. Usage reading is in beta."
-                    : "Claude Code was not found in standard locations."
-            )
-            .foregroundStyle(.secondary)
             if !isInstalled {
+                Text("Claude Code was not found in standard locations.")
+                    .foregroundStyle(.secondary)
                 Text("Install and sign in to Claude Code to enable local detection.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+            } else {
+                Text("No usage data yet. Run /statusline in a Claude Code session and paste this script:")
+                    .foregroundStyle(.secondary)
+                Text(ClaudeStatusFile.statusLineSetupCommand)
+                    .font(.system(.caption2, design: .monospaced))
+                    .lineLimit(3)
+                    .truncationMode(.tail)
+                    .textSelection(.enabled)
+                Button("Copy Setup Command") {
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(ClaudeStatusFile.statusLineSetupCommand, forType: .string)
+                }
+                .font(.footnote)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

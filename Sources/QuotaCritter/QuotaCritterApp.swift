@@ -40,6 +40,7 @@ struct QuotaCreatureApp: App {
 @MainActor
 final class UsageStore: ObservableObject {
     @Published private(set) var state: UsageViewState = .loading
+    @Published private(set) var claudeState: UsageViewState = .loading
     @Published private(set) var currentDate = Date()
     @Published private(set) var animationDate = Date()
     @Published private(set) var activity: UsageActivity = .idle
@@ -77,12 +78,26 @@ final class UsageStore: ObservableObject {
         }
     }
 
+    var displayedState: UsageViewState {
+        selectedProvider == .codex ? state : claudeState
+    }
+
     var displayedMenuTitle: String {
-        state.menuTitle(for: selectedProvider)
+        switch selectedProvider {
+        case .codex:
+            state.menuTitle
+        case .claude:
+            claudeState.snapshot.map { "\($0.remainingPercent)%" } ?? "β"
+        }
     }
 
     var displayedMood: PetMood {
-        state.petMood(for: selectedProvider)
+        switch selectedProvider {
+        case .codex:
+            state.petMood
+        case .claude:
+            claudeState.petMood
+        }
     }
 
     var displayedActivity: UsageActivity {
@@ -100,6 +115,8 @@ final class UsageStore: ObservableObject {
     }
 
     func refresh() {
+        refreshClaudeState()
+
         refreshID += 1
         let requestID = refreshID
         let previous = state.snapshot
@@ -122,6 +139,15 @@ final class UsageStore: ObservableObject {
             case .failure:
                 state = .unavailable(state.snapshot ?? previous)
             }
+        }
+    }
+
+    private func refreshClaudeState() {
+        switch ClaudeStatusFile.read() {
+        case let .success(snapshot):
+            claudeState = .ready(snapshot)
+        case .failure:
+            claudeState = .unavailable(claudeState.snapshot)
         }
     }
 
