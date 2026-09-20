@@ -3,7 +3,7 @@ name: Release DMG
 on:
   push:
     tags:
-      - v0.0.3-beta
+      - v1.0.0
 
 permissions:
   contents: read
@@ -38,6 +38,5 @@ jobs:
           "dist/QuotaCreature-$GITHUB_REF_NAME.dmg"
           "dist/QuotaCreature-$GITHUB_REF_NAME.dmg.sha256"
           --verify-tag
-          --prerelease
           --generate-notes
           --title "QuotaCreature $GITHUB_REF_NAME"
