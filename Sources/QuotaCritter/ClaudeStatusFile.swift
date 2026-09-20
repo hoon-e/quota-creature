@@ -153,7 +153,7 @@ enum ClaudeStatusLineInstaller {
 
     /// Distinctive enough to recognise our own command without storing a marker
     /// key in someone else's settings file.
-    static let commandMarker = "com.quotacreature.quotacreature/claude-status.json"
+    static let commandMarker = "Library/Application Support/com.quotacreature.quotacreature"
 
     static var settingsURL: URL {
         FileManager.default
